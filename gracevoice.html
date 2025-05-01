@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GraceVoice</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b5998" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('✅ GraceVoice Service Worker registered'))
+        .catch(err => console.error('❌ SW registration failed:', err));
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+      text-align: center;
+    }
+    #verseDisplay {
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+    }
+    button {
+      background-color: #3b5998;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #2d4373;
+    }
+  </style>
+</head>
+<body>
+  <h2>📖 GraceVoice</h2>
+  <p>Say: "Next", "Repeat", or "Stop"</p>
+  <div id="verseDisplay">Click "Start Reading" to begin</div>
+  <button onclick="startReading()">▶ Start Reading</button>
+  <button onclick="startListening()">🎙️ Voice Command</button>
+
+  <script>
+    const verses = [
+      "Does not wisdom call out? Does not understanding raise her voice?",
+      "At the highest point along the way, where the paths meet, she takes her stand;",
+      "Beside the gate leading into the city, at the entrance, she cries aloud:",
+      "To you, O people, I call out; I raise my voice to all mankind.",
+      "You who are simple, gain prudence; you who are foolish, set your hearts on it."
+    ];
+
+    let currentVerse = 0;
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1;
+      speechSynthesis.speak(utterance);
+    }
+
+    function displayVerse(index) {
+      document.getElementById("verseDisplay").textContent = verses[index];
+    }
+
+    function startReading() {
+      currentVerse = 0;
+      displayVerse(currentVerse);
+      speak(verses[currentVerse]);
+    }
+
+    function handleVoiceCommand(command) {
+      if (command.includes("next")) {
+        if (currentVerse < verses.length - 1) {
+          currentVerse++;
+          displayVerse(currentVerse);
+          speak(verses[currentVerse]);
+        } else {
+          speak("You have reached the end of the chapter.");
+        }
+      } else if (command.includes("repeat")) {
+        speak(verses[currentVerse]);
+      } else if (command.includes("stop")) {
+        speechSynthesis.cancel();
+        speak("Reading stopped.");
+      } else {
+        speak("Command not recognized. Say Next, Repeat, or Stop.");
+      }
+    }
+
+    function startListening() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech recognition not supported in this browser.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+      recognition.onresult = function(event) {
+        const command = event.results[0][0].transcript.toLowerCase();
+        console.log("You said:", command);
+        handleVoiceCommand(command);
+      };
+
+      recognition.onerror = function(event) {
+        console.error("Recognition error:", event.error);
+        speak("Sorry, I did not hear you. Please try again.");
+      };
+    }
+  </script>
+</body>
+</html>
