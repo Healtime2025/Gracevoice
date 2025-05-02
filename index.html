@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GraceVoice</title>
+  <link rel="manifest" href="manifest.json">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -57,6 +57,8 @@
   <button onclick="startVoice()">🎙️ Voice Command</button>
   <div id="voiceFeedback"></div>
 
+  <script src="script/parser.js"></script>
+
   <script>
     const display = document.getElementById("verseDisplay");
     const feedback = document.getElementById("voiceFeedback");
@@ -79,26 +81,18 @@
         const transcript = event.results[0][0].transcript;
         feedback.textContent = `Heard: "${transcript}"`;
 
-        const match = transcript.match(/read (\w+) (\d+)(?: verse (\d+)(?: to (\d+))?)?/i);
-        if (match) {
-          const [, book, chapter, verseStart, verseEnd] = match;
-          let response = await fetch(`https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzntpRTmAaDZSP3LJn1X-3nsJeyAr6AMPGg41Du9_Hnh0XFsNwI0o2O6hUVEzEFeT529Q/exec?book=${book}&chapter=${chapter}`);
-          let data = await response.json();
-          let verses = data.verses;
-          let output = "";
-
-          if (verseStart && verseEnd) {
-            for (let i = parseInt(verseStart); i <= parseInt(verseEnd); i++) {
-              if (verses[i]) output += verses[i] + " ";
-            }
-          } else if (verseStart && verses[verseStart]) {
-            output = verses[verseStart];
-          } else {
-            output = Object.values(verses).slice(0, 3).join(" ");
-          }
-
-          display.innerText = output;
-          readText(output);
+        const parsed = parseVoiceCommand(transcript);
+        if (parsed.action === "read") {
+          const url = `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?book=${parsed.book}&chapter=${parsed.chapter}`;
+          const response = await fetch(url);
+          const data = await response.json();
+          const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean).join(" ");
+          display.innerText = verses || "Verse not found.";
+          readText(verses || "Verse not found.");
+        } else if (parsed.action === "repeat") {
+          readText();
+        } else if (parsed.action === "stop") {
+          speechSynthesis.cancel();
         } else {
           display.innerText = "Sorry, I didn't understand.";
           readText("Sorry, I didn't understand that.");
