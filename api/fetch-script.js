@@ -1,32 +1,34 @@
 export default async function handler(req, res) {
-  // Enable CORS for all requests
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  // Handle CORS preflight request
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  const { book, chapter } = req.query;
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzntpRTmAaDZSP3LJn1X-3nsJeyAr6AMPGg41Du9_Hnh0XFsNwI0o2O6hUVEzEFeT529Q/exec";
+  const { book, chapter, translation = "web" } = req.query;
 
   if (!book || !chapter) {
-    return res.status(400).json({ error: "Missing book or chapter in request." });
+    return res.status(400).json({ error: "Missing book or chapter." });
   }
 
+  const query = `${book} ${chapter}`;
+  const apiUrl = `https://bible-api.com/${encodeURIComponent(query)}?translation=${translation}`;
+
   try {
-    const apiUrl = `${SCRIPT_URL}?book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
 
-    res.status(200).json(data);
-  } catch (err) {
-    console.error("[GraceVoice Proxy Error]", err);
-    res.status(500).json({
-      error: "GraceVoice Proxy Error",
-      details: err.message || "Unexpected error"
+    if (data.error) {
+      return res.status(404).json({ error: "Verse not found." });
+    }
+
+    // Convert to GraceVoice format: { verses: { "1": "...", "2": "..." } }
+    const verses = {};
+    data.verses.forEach(v => {
+      verses[v.verse.toString()] = v.text.trim();
     });
+
+    return res.status(200).json({
+      book: data.book_name,
+      chapter: data.chapter,
+      verses: verses
+    });
+
+  } catch (err) {
+    return res.status(500).json({ error: "GraceVoice fetch error", details: err.message });
   }
 }
