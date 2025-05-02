@@ -126,18 +126,130 @@
     Click "Start Reading" or use voice command
   </div>
 
-  <div>
-    <button onclick="showBookmarks()">📄 My Bookmarks</button>
-  </div>
   <div id="voiceFeedback"></div>
 
-  <div>
+  <div style="margin-top: 40px">
     <button onclick="window.location.href='https://gracevoice-settings.example.com'">⚙️ Settings</button>
     <button onclick="window.location.href='https://gracevoice.example.com/subscribe'" style="background-color:#28a745; margin-left: 10px;">💖 Donate / Subscribe</button>
   </div>
 
 <script>
-// JavaScript remains unchanged, preserved to ensure full functionality.
+  const display = document.getElementById("verseDisplay");
+  const feedback = document.getElementById("voiceFeedback");
+  let lastReadText = "";
+  window.graceQueue = [];
+  let selectedVoice = null;
+
+  function readText(text = display.innerText) {
+    const voices = speechSynthesis.getVoices();
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.voice = selectedVoice || voices[0];
+    speech.pitch = 1;
+    speech.rate = 0.95;
+    speechSynthesis.cancel(); // stop current
+    speechSynthesis.speak(speech);
+    lastReadText = text;
+  }
+
+  function stopSpeech() {
+    speechSynthesis.cancel();
+  }
+
+  function readSelected() {
+    const book = document.getElementById("bookSelect").value;
+    const chapter = document.getElementById("chapterInput").value;
+    const startVerse = parseInt(document.getElementById("startVerseInput").value);
+    const endVerse = parseInt(document.getElementById("endVerseInput").value);
+    if (!book || !chapter) return alert("Please select book and chapter");
+
+    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        let html = "";
+        let spoken = [];
+        if (!isNaN(startVerse) && !isNaN(endVerse)) {
+          for (let i = startVerse; i <= endVerse; i++) {
+            if (data.verses[i]) {
+              html += `<span class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
+              spoken.push(data.verses[i]);
+            }
+          }
+        } else if (!isNaN(startVerse)) {
+          const txt = data.verses[startVerse];
+          html = `<span class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
+          spoken.push(txt);
+        } else {
+          const keys = Object.keys(data.verses).slice(0, 3);
+          keys.forEach(k => {
+            html += `<span class='verse-line'><b>${k}.</b> ${data.verses[k]}</span>`;
+            spoken.push(data.verses[k]);
+          });
+        }
+        display.innerHTML = html;
+        lastReadText = spoken.join(" ");
+        readText(lastReadText);
+      })
+      .catch(err => {
+        display.innerText = "⚠️ Error loading verses.";
+      });
+  }
+
+  function readHighlighted() {
+    if (!window.graceQueue || window.graceQueue.length === 0) return;
+    let index = 0;
+    function speakNext() {
+      if (index >= window.graceQueue.length) return;
+      const { id, text } = window.graceQueue[index];
+      document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('active-verse');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
+      utter.pitch = 1;
+      utter.rate = 0.95;
+      utter.onend = () => { index++; speakNext(); };
+      speechSynthesis.speak(utter);
+    }
+    speakNext();
+  }
+
+  function startVoice() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.start();
+
+    recognition.onresult = async function(event) {
+      const transcript = event.results[0][0].transcript;
+      feedback.textContent = `Heard: "${transcript}"`;
+      readText(transcript);
+    };
+
+    recognition.onerror = function(event) {
+      feedback.textContent = "Voice error: " + event.error;
+    };
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle("night-mode");
+    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
+  }
+
+  window.onload = () => {
+    if (localStorage.getItem("graceTheme") === "dark") {
+      document.body.classList.add("night-mode");
+      document.getElementById("themeToggle").checked = true;
+    }
+    speechSynthesis.onvoiceschanged = () => {
+      selectedVoice = speechSynthesis.getVoices()[0];
+    };
+  };
 </script>
 </body>
 </html>
+
