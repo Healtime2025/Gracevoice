@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GraceVoice</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 32px;
+      color: #2c3e50;
+    }
+    .scripture-box {
+      margin: 30px auto;
+      padding: 20px;
+      max-width: 800px;
+      background: white;
+      border-radius: 10px;
+      font-size: 28px;
+      line-height: 1.6;
+      color: #333;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    button {
+      padding: 15px 25px;
+      font-size: 18px;
+      margin: 10px;
+      border: none;
+      background: #1976d2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #145a9e;
+    }
+    #voiceFeedback {
+      margin-top: 10px;
+      font-style: italic;
+      color: #555;
+    }
+    select, input[type="number"] {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>📖 GraceVoice</h1>
+  <p>Say: "Read Genesis 1 verse 1", or select manually below:</p>
+
+  <div>
+    <select id="bookSelect">
+      <option value="Genesis">Genesis</option>
+      <option value="Exodus">Exodus</option>
+      <option value="John">John</option>
+      <option value="Matthew">Matthew</option>
+    </select>
+    <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
+    <input id="verseInput" type="number" placeholder="Verse" min="1" />
+    <button onclick="readSelected()">📘 Read Selection</button>
+  </div>
+
+  <div class="scripture-box" id="verseDisplay">
+    Click "Start Reading" or use voice command
+  </div>
+
+  <button onclick="readText()">▶️ Start Reading</button>
+  <button onclick="startVoice()">🎙️ Voice Command</button>
+  <div id="voiceFeedback"></div>
+
+  <script src="script/parser.js"></script>
+
+  <script>
+    const display = document.getElementById("verseDisplay");
+    const feedback = document.getElementById("voiceFeedback");
+    let lastReadText = "";
+
+    function readText(text = display.innerText) {
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.pitch = 1;
+      speech.rate = 0.95;
+      window.speechSynthesis.speak(speech);
+      lastReadText = text;
+    }
+
+    function readSelected() {
+      const book = document.getElementById("bookSelect").value;
+      const chapter = document.getElementById("chapterInput").value;
+      const verse = document.getElementById("verseInput").value;
+      if (!book || !chapter) return alert("Please select book and chapter");
+
+      const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const output = verse ? data.verses[verse] : Object.values(data.verses).slice(0, 3).join(" ");
+          display.innerText = output || "Verse not found.";
+          readText(output || "Verse not found.");
+        })
+        .catch(() => {
+          display.innerText = "⚠️ Error fetching scripture.";
+        });
+    }
+
+    function startVoice() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
+
+      recognition.onresult = async function(event) {
+        const transcript = event.results[0][0].transcript;
+        feedback.textContent = `Heard: "${transcript}"`;
+
+        const parsed = parseVoiceCommand(transcript);
+        if (parsed.action === "read") {
+          const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}`;
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean).join(" ");
+            display.innerText = verses || "Verse not found.";
+            readText(verses || "Verse not found.");
+          } catch {
+            display.innerText = "⚠️ Error retrieving verses.";
+          }
+        } else if (parsed.action === "repeat") {
+          readText(lastReadText);
+        } else if (parsed.action === "stop") {
+          speechSynthesis.cancel();
+        } else {
+          display.innerText = "Sorry, I didn't understand.";
+          readText("Sorry, I didn't understand that.");
+        }
+      };
+
+      recognition.onerror = function(event) {
+        feedback.textContent = "Voice error: " + event.error;
+      };
+    }
+  </script>
+</body>
+</html>
