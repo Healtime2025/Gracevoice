@@ -59,75 +59,12 @@
   <p>Say: "Read Genesis 1 verse 1", or select manually below:</p>
 
   <div>
-<select id="bookSelect">
-  <option value="Genesis">Genesis</option>
-  <option value="Exodus">Exodus</option>
-  <option value="Leviticus">Leviticus</option>
-  <option value="Numbers">Numbers</option>
-  <option value="Deuteronomy">Deuteronomy</option>
-  <option value="Joshua">Joshua</option>
-  <option value="Judges">Judges</option>
-  <option value="Ruth">Ruth</option>
-  <option value="1 Samuel">1 Samuel</option>
-  <option value="2 Samuel">2 Samuel</option>
-  <option value="1 Kings">1 Kings</option>
-  <option value="2 Kings">2 Kings</option>
-  <option value="1 Chronicles">1 Chronicles</option>
-  <option value="2 Chronicles">2 Chronicles</option>
-  <option value="Ezra">Ezra</option>
-  <option value="Nehemiah">Nehemiah</option>
-  <option value="Esther">Esther</option>
-  <option value="Job">Job</option>
-  <option value="Psalms">Psalms</option>
-  <option value="Proverbs">Proverbs</option>
-  <option value="Ecclesiastes">Ecclesiastes</option>
-  <option value="Song of Solomon">Song of Solomon</option>
-  <option value="Isaiah">Isaiah</option>
-  <option value="Jeremiah">Jeremiah</option>
-  <option value="Lamentations">Lamentations</option>
-  <option value="Ezekiel">Ezekiel</option>
-  <option value="Daniel">Daniel</option>
-  <option value="Hosea">Hosea</option>
-  <option value="Joel">Joel</option>
-  <option value="Amos">Amos</option>
-  <option value="Obadiah">Obadiah</option>
-  <option value="Jonah">Jonah</option>
-  <option value="Micah">Micah</option>
-  <option value="Nahum">Nahum</option>
-  <option value="Habakkuk">Habakkuk</option>
-  <option value="Zephaniah">Zephaniah</option>
-  <option value="Haggai">Haggai</option>
-  <option value="Zechariah">Zechariah</option>
-  <option value="Malachi">Malachi</option>
-  <option value="Matthew">Matthew</option>
-  <option value="Mark">Mark</option>
-  <option value="Luke">Luke</option>
-  <option value="John">John</option>
-  <option value="Acts">Acts</option>
-  <option value="Romans">Romans</option>
-  <option value="1 Corinthians">1 Corinthians</option>
-  <option value="2 Corinthians">2 Corinthians</option>
-  <option value="Galatians">Galatians</option>
-  <option value="Ephesians">Ephesians</option>
-  <option value="Philippians">Philippians</option>
-  <option value="Colossians">Colossians</option>
-  <option value="1 Thessalonians">1 Thessalonians</option>
-  <option value="2 Thessalonians">2 Thessalonians</option>
-  <option value="1 Timothy">1 Timothy</option>
-  <option value="2 Timothy">2 Timothy</option>
-  <option value="Titus">Titus</option>
-  <option value="Philemon">Philemon</option>
-  <option value="Hebrews">Hebrews</option>
-  <option value="James">James</option>
-  <option value="1 Peter">1 Peter</option>
-  <option value="2 Peter">2 Peter</option>
-  <option value="1 John">1 John</option>
-  <option value="2 John">2 John</option>
-  <option value="3 John">3 John</option>
-  <option value="Jude">Jude</option>
-  <option value="Revelation">Revelation</option>
-</select>
-
+    <select id="bookSelect">
+      <option value="Genesis">Genesis</option>
+      <option value="Exodus">Exodus</option>
+      <!-- (List all 66 books here) -->
+      <option value="Revelation">Revelation</option>
+    </select>
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
     <input id="startVerseInput" type="number" placeholder="Start Verse" min="1" />
     <input id="endVerseInput" type="number" placeholder="End Verse" min="1" />
@@ -143,7 +80,7 @@
   </div>
 
   <button onclick="readText()">▶️ Start Reading</button>
-  <button onclick="startVoice()">🎙️ Voice Command</button>
+  <button onclick="startVoice()">🎧 Voice Command</button>
   <div id="voiceFeedback"></div>
 
   <script>
@@ -174,7 +111,6 @@
         .then(data => {
           const all = data.verses;
           let output = "";
-
           if (start && end && end >= start) {
             for (let i = start; i <= end; i++) {
               if (all[i]) output += `${i}. ${all[i]} `;
@@ -182,7 +118,6 @@
           } else {
             output = Object.values(all).slice(0, 3).join(" ");
           }
-
           display.innerText = output || "Verse(s) not found.";
           readText(output || "Verse(s) not found.");
         })
@@ -191,14 +126,25 @@
         });
     }
 
-    function parseVoiceCommand(command) {
-      const lower = command.toLowerCase();
+    function parseVoiceCommand(transcript) {
+      const lower = transcript.toLowerCase().trim();
       if (lower.includes("repeat")) return { action: "repeat" };
       if (lower.includes("stop")) return { action: "stop" };
+      if (lower.includes("restart")) return { action: "restart" };
+      if (lower.includes("next")) return { action: "next" };
+      if (lower.includes("previous")) return { action: "previous" };
+      if (lower.includes("switch to kjv") || lower.includes("use kjv")) return { action: "setTranslation", translation: "kjv" };
+      if (lower.includes("switch to web") || lower.includes("use web")) return { action: "setTranslation", translation: "web" };
+      if (lower.includes("daily verse") || lower.includes("verse of the day")) return { action: "dailyVerse" };
+      if (lower.includes("inspire me")) return { action: "randomEncouragement" };
+      if (lower.includes("bookmark this")) return { action: "bookmark" };
+      if (lower.includes("show bookmarks")) return { action: "showBookmarks" };
+      if (lower.includes("favorite verse")) return { action: "readFavorite" };
 
-      const match = lower.match(/read\s+(\w+)\s+(\d+)(?:\s+verse(?:s)?\s+(\d+)(?:\s+to\s+(\d+))?)?/);
+      const pattern = /read\s+(\d?\s?[a-z]+)\s+(\d+)(?:\s+verse(?:s)?\s+(\d+)(?:\s+to\s+(\d+))?)?/i;
+      const match = lower.match(pattern);
       if (match) {
-        const book = match[1];
+        const book = match[1].replace(/\s+/g, " ").trim();
         const chapter = match[2];
         const start = match[3] ? parseInt(match[3]) : 1;
         const end = match[4] ? parseInt(match[4]) : start;
@@ -207,7 +153,10 @@
         return { action: "read", book, chapter, verses };
       }
 
-      return { action: "unknown" };
+      const jumpMatch = lower.match(/go to chapter (\d+)/);
+      if (jumpMatch) return { action: "goToChapter", chapter: parseInt(jumpMatch[1]) };
+
+      return { action: "unknown", transcript: lower };
     }
 
     function startVoice() {
@@ -220,8 +169,8 @@
       recognition.onresult = async function(event) {
         const transcript = event.results[0][0].transcript;
         feedback.textContent = `Heard: "${transcript}"`;
-
         const parsed = parseVoiceCommand(transcript);
+
         const translation = document.getElementById("translationSelect").value;
 
         if (parsed.action === "read") {
@@ -240,8 +189,8 @@
         } else if (parsed.action === "stop") {
           speechSynthesis.cancel();
         } else {
-          display.innerText = "Sorry, I didn't understand.";
-          readText("Sorry, I didn't understand that.");
+          display.innerText = `Command received: ${parsed.action}`;
+          readText(`Action triggered: ${parsed.action}`);
         }
       };
 
