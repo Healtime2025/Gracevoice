@@ -45,12 +45,19 @@
       font-style: italic;
       color: #555;
     }
-    select, input[type="number"] {
+    select, input[type="number"], #bookSearch {
       padding: 10px;
       font-size: 16px;
       margin: 10px;
       border-radius: 6px;
       border: 1px solid #ccc;
+    }
+    #bookSearch {
+      width: 280px;
+      display: block;
+      margin: 10px auto;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
   </style>
 </head>
@@ -58,30 +65,105 @@
   <h1>📖 GraceVoice</h1>
   <p>Say: "Read Genesis 1 verse 1", or select manually below:</p>
 
-  <div>
-    <select id="bookSelect">
+  <div style="max-width: 320px; margin: auto;">
+    <input type="text" id="bookSearch" placeholder="Search book..." oninput="filterBooks()" />
+    <select id="bookSelect" size="10" style="width: 100%;">
       <option value="Genesis">Genesis</option>
       <option value="Exodus">Exodus</option>
-      <option value="John">John</option>
+      <option value="Leviticus">Leviticus</option>
+      <option value="Numbers">Numbers</option>
+      <option value="Deuteronomy">Deuteronomy</option>
+      <option value="Joshua">Joshua</option>
+      <option value="Judges">Judges</option>
+      <option value="Ruth">Ruth</option>
+      <option value="1Samuel">1 Samuel</option>
+      <option value="2Samuel">2 Samuel</option>
+      <option value="1Kings">1 Kings</option>
+      <option value="2Kings">2 Kings</option>
+      <option value="1Chronicles">1 Chronicles</option>
+      <option value="2Chronicles">2 Chronicles</option>
+      <option value="Ezra">Ezra</option>
+      <option value="Nehemiah">Nehemiah</option>
+      <option value="Esther">Esther</option>
+      <option value="Job">Job</option>
+      <option value="Psalms">Psalms</option>
+      <option value="Proverbs">Proverbs</option>
+      <option value="Ecclesiastes">Ecclesiastes</option>
+      <option value="SongOfSongs">Song of Songs</option>
+      <option value="Isaiah">Isaiah</option>
+      <option value="Jeremiah">Jeremiah</option>
+      <option value="Lamentations">Lamentations</option>
+      <option value="Ezekiel">Ezekiel</option>
+      <option value="Daniel">Daniel</option>
+      <option value="Hosea">Hosea</option>
+      <option value="Joel">Joel</option>
+      <option value="Amos">Amos</option>
+      <option value="Obadiah">Obadiah</option>
+      <option value="Jonah">Jonah</option>
+      <option value="Micah">Micah</option>
+      <option value="Nahum">Nahum</option>
+      <option value="Habakkuk">Habakkuk</option>
+      <option value="Zephaniah">Zephaniah</option>
+      <option value="Haggai">Haggai</option>
+      <option value="Zechariah">Zechariah</option>
+      <option value="Malachi">Malachi</option>
       <option value="Matthew">Matthew</option>
+      <option value="Mark">Mark</option>
+      <option value="Luke">Luke</option>
+      <option value="John">John</option>
+      <option value="Acts">Acts</option>
+      <option value="Romans">Romans</option>
+      <option value="1Corinthians">1 Corinthians</option>
+      <option value="2Corinthians">2 Corinthians</option>
+      <option value="Galatians">Galatians</option>
+      <option value="Ephesians">Ephesians</option>
+      <option value="Philippians">Philippians</option>
+      <option value="Colossians">Colossians</option>
+      <option value="1Thessalonians">1 Thessalonians</option>
+      <option value="2Thessalonians">2 Thessalonians</option>
+      <option value="1Timothy">1 Timothy</option>
+      <option value="2Timothy">2 Timothy</option>
+      <option value="Titus">Titus</option>
+      <option value="Philemon">Philemon</option>
+      <option value="Hebrews">Hebrews</option>
+      <option value="James">James</option>
+      <option value="1Peter">1 Peter</option>
+      <option value="2Peter">2 Peter</option>
+      <option value="1John">1 John</option>
+      <option value="2John">2 John</option>
+      <option value="3John">3 John</option>
+      <option value="Jude">Jude</option>
+      <option value="Revelation">Revelation</option>
     </select>
-    <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
-    <input id="verseInput" type="number" placeholder="Verse" min="1" />
-    <button onclick="readSelected()">📘 Read Selection</button>
   </div>
+
+  <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
+  <input id="verseInput" type="number" placeholder="Verse" min="1" />
+  <button onclick="readSelected()">📘 Read Selection</button>
 
   <div class="scripture-box" id="verseDisplay">
     Click "Start Reading" or use voice command
   </div>
 
   <button onclick="readText()">▶️ Start Reading</button>
-  <button onclick="startVoice()">🎙️ Voice Command</button>
+  <button onclick="startVoice()">🎧 Voice Command</button>
   <div id="voiceFeedback"></div>
 
   <script>
     const display = document.getElementById("verseDisplay");
     const feedback = document.getElementById("voiceFeedback");
     let lastReadText = "";
+
+    function filterBooks() {
+      const input = document.getElementById("bookSearch").value.toLowerCase();
+      const select = document.getElementById("bookSelect");
+      const options = select.options;
+
+      for (let i = 0; i < options.length; i++) {
+        const bookName = options[i].text.toLowerCase();
+        options[i].style.display = bookName.includes(input) ? "" : "none";
+      }
+    }
 
     function readText(text = display.innerText) {
       const speech = new SpeechSynthesisUtterance(text);
@@ -120,7 +202,7 @@
       if (match) {
         const book = match[1];
         const chapter = match[2];
-        const verse = match[3] ? [match[3]] : ["1", "2", "3"]; // read first 3 by default
+        const verse = match[3] ? [match[3]] : ["1", "2", "3"];
         return { action: "read", book, chapter, verses: verse };
       }
 
@@ -167,3 +249,4 @@
   </script>
 </body>
 </html>
+
