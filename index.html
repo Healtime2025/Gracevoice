@@ -45,14 +45,36 @@
       font-style: italic;
       color: #555;
     }
+    select, input[type="number"] {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
   <h1>📖 GraceVoice</h1>
-  <p>Say: "Read Genesis 1 verse 1", "Next", "Stop", etc.</p>
+  <p>Say: "Read Genesis 1 verse 1", or select manually below:</p>
+
+  <div>
+    <select id="bookSelect">
+      <option value="Genesis">Genesis</option>
+      <option value="Exodus">Exodus</option>
+      <option value="John">John</option>
+      <option value="Matthew">Matthew</option>
+      <!-- Add more books as needed -->
+    </select>
+    <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
+    <input id="verseInput" type="number" placeholder="Verse" min="1" />
+    <button onclick="readSelected()">📘 Read Selection</button>
+  </div>
+
   <div class="scripture-box" id="verseDisplay">
     Click "Start Reading" or use voice command
   </div>
+
   <button onclick="readText()">▶️ Start Reading</button>
   <button onclick="startVoice()">🎙️ Voice Command</button>
   <div id="voiceFeedback"></div>
@@ -70,6 +92,22 @@
       window.speechSynthesis.speak(speech);
     }
 
+    function readSelected() {
+      const book = document.getElementById("bookSelect").value;
+      const chapter = document.getElementById("chapterInput").value;
+      const verse = document.getElementById("verseInput").value;
+      if (!book || !chapter) return alert("Please select book and chapter");
+
+      const url = `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?book=${book}&chapter=${chapter}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const output = verse ? data.verses[verse] : Object.values(data.verses).slice(0, 3).join(" ");
+          display.innerText = output || "Verse not found.";
+          readText(output || "Verse not found.");
+        });
+    }
+
     function startVoice() {
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = "en-US";
@@ -83,7 +121,7 @@
 
         const parsed = parseVoiceCommand(transcript);
         if (parsed.action === "read") {
-          const url = `https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzntpRTmAaDZSP3LJn1X-3nsJeyAr6AMPGg41Du9_Hnh0XFsNwI0o2O6hUVEzEFeT529Q/exec?book=${parsed.book}&chapter=${parsed.chapter}`;
+          const url = `https://script.google.com/macros/s/AKfycbzntpRTmAaDZSP3LJn1X-3nsJeyAr6AMPGg41Du9_Hnh0XFsNwI0o2O6hUVEzEFeT529Q/exec?book=${parsed.book}&chapter=${parsed.chapter}`;
           const response = await fetch(url);
           const data = await response.json();
           const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean).join(" ");
@@ -106,3 +144,4 @@
   </script>
 </body>
 </html>
+
