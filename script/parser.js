@@ -1,9 +1,10 @@
-// GraceVoice Natural Voice Command Parser
+// GraceVoice Voice Command Handler + Scripture Fetcher
+
+const SCRIPT_API = "https://script.google.com/macros/s/AKfycbzntpRTmAaDZSP3LJn1X-3nsJeyAr6AMPGg41Du9_Hnh0XFsNwI0o2O6hUVEzEFeT529Q/exec";
 
 function parseVoiceCommand(command) {
   command = command.toLowerCase();
 
-  // Match: "read genesis 1 verse 5"
   const matchSingle = command.match(/read\s+(\w+)\s+(\d+)\s+verse\s+(\d+)/);
   if (matchSingle) {
     return {
@@ -14,13 +15,10 @@ function parseVoiceCommand(command) {
     };
   }
 
-  // Match: "read john 3 verses 16 to 18"
   const matchRange = command.match(/read\s+(\w+)\s+(\d+)\s+verses\s+(\d+)\s+to\s+(\d+)/);
   if (matchRange) {
     const verses = [];
-    const start = parseInt(matchRange[3]);
-    const end = parseInt(matchRange[4]);
-    for (let i = start; i <= end; i++) {
+    for (let i = parseInt(matchRange[3]); i <= parseInt(matchRange[4]); i++) {
       verses.push(i.toString());
     }
     return {
@@ -31,7 +29,6 @@ function parseVoiceCommand(command) {
     };
   }
 
-  // Match: "repeat" or "next" or "stop"
   if (command.includes("repeat")) return { action: "repeat" };
   if (command.includes("next")) return { action: "next" };
   if (command.includes("stop")) return { action: "stop" };
@@ -39,22 +36,44 @@ function parseVoiceCommand(command) {
   return { action: "unknown" };
 }
 
-// Example Usage
-const userCommand = "Read Genesis 1 verse 1";
-const result = parseVoiceCommand(userCommand);
+async function handleCommand(command, displayElement) {
+  const result = parseVoiceCommand(command);
+  if (result.action === "read") {
+    try {
+      const response = await fetch(`${SCRIPT_API}?book=${result.book}&chapter=${result.chapter}`);
+      const data = await response.json();
+      let output = "";
 
-if (result.action === "read") {
-  const api = `https://your-script-url?book=${result.book}&chapter=${result.chapter}`;
-  fetch(api)
-    .then(res => res.json())
-    .then(data => {
       result.verses.forEach(v => {
-        const verseText = data.verses[v];
-        console.log(`Verse ${v}: ${verseText}`);
-        const utterance = new SpeechSynthesisUtterance(verseText);
-        speechSynthesis.speak(utterance);
+        if (data.verses[v]) {
+          output += `Verse ${v}: ${data.verses[v]} `;
+        }
       });
-    });
-} else {
-  console.log("Voice command action:", result.action);
+
+      displayElement.innerText = output || "Verse(s) not found.";
+      speak(output || "Sorry, I couldn't find the verses.");
+    } catch (err) {
+      console.error("Fetch failed:", err);
+      displayElement.innerText = "⚠️ Unable to retrieve scripture.";
+      speak("Sorry, I couldn't connect to the server.");
+    }
+  } else if (result.action === "repeat") {
+    speak(displayElement.innerText);
+  } else if (result.action === "next") {
+    displayElement.innerText = "⏭ Next verse logic not implemented.";
+    speak("Next verse logic not ready yet.");
+  } else if (result.action === "stop") {
+    speechSynthesis.cancel();
+  } else {
+    displayElement.innerText = "Sorry, I didn't understand.";
+    speak("Sorry, I didn't understand that.");
+  }
 }
+
+function speak(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.pitch = 1;
+  utterance.rate = 0.95;
+  speechSynthesis.speak(utterance);
+}
+
