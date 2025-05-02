@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/read",
+      "destination": "/public/reader.html"
+    }
+  ]
+}
