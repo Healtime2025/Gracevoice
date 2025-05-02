@@ -40,17 +40,17 @@
     button:hover {
       background: #145a9e;
     }
-    #voiceFeedback {
-      margin-top: 10px;
-      font-style: italic;
-      color: #555;
-    }
     select, input[type="number"] {
       padding: 10px;
       font-size: 16px;
       margin: 10px;
       border-radius: 6px;
       border: 1px solid #ccc;
+    }
+    #voiceFeedback {
+      margin-top: 10px;
+      font-style: italic;
+      color: #555;
     }
   </style>
 </head>
@@ -67,6 +67,10 @@
     </select>
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
     <input id="verseInput" type="number" placeholder="Verse" min="1" />
+    <select id="translationSelect">
+      <option value="web">WEB</option>
+      <option value="kjv">KJV</option>
+    </select>
     <button onclick="readSelected()">📘 Read Selection</button>
   </div>
 
@@ -95,9 +99,11 @@
       const book = document.getElementById("bookSelect").value;
       const chapter = document.getElementById("chapterInput").value;
       const verse = document.getElementById("verseInput").value;
+      const translation = document.getElementById("translationSelect").value;
+
       if (!book || !chapter) return alert("Please select book and chapter");
 
-      const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+      const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}&translation=${translation}`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -112,7 +118,6 @@
 
     function parseVoiceCommand(command) {
       const lower = command.toLowerCase();
-
       if (lower.includes("repeat")) return { action: "repeat" };
       if (lower.includes("stop")) return { action: "stop" };
 
@@ -120,8 +125,8 @@
       if (match) {
         const book = match[1];
         const chapter = match[2];
-        const verse = match[3] ? [match[3]] : ["1", "2", "3"]; // read first 3 by default
-        return { action: "read", book, chapter, verses: verse };
+        const verses = match[3] ? [match[3]] : ["1", "2", "3"];
+        return { action: "read", book, chapter, verses };
       }
 
       return { action: "unknown" };
@@ -139,8 +144,10 @@
         feedback.textContent = `Heard: "${transcript}"`;
 
         const parsed = parseVoiceCommand(transcript);
+        const translation = document.getElementById("translationSelect").value;
+
         if (parsed.action === "read") {
-          const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}`;
+          const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}&translation=${translation}`;
           try {
             const response = await fetch(url);
             const data = await response.json();
@@ -167,4 +174,3 @@
   </script>
 </body>
 </html>
-
