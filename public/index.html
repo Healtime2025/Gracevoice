@@ -66,7 +66,8 @@
       <option value="Matthew">Matthew</option>
     </select>
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
-    <input id="verseInput" type="number" placeholder="Verse" min="1" />
+    <input id="startVerseInput" type="number" placeholder="Start Verse" min="1" />
+    <input id="endVerseInput" type="number" placeholder="End Verse" min="1" />
     <select id="translationSelect">
       <option value="web">WEB</option>
       <option value="kjv">KJV</option>
@@ -98,7 +99,8 @@
     function readSelected() {
       const book = document.getElementById("bookSelect").value;
       const chapter = document.getElementById("chapterInput").value;
-      const verse = document.getElementById("verseInput").value;
+      const start = parseInt(document.getElementById("startVerseInput").value);
+      const end = parseInt(document.getElementById("endVerseInput").value);
       const translation = document.getElementById("translationSelect").value;
 
       if (!book || !chapter) return alert("Please select book and chapter");
@@ -107,9 +109,19 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          const output = verse ? data.verses[verse] : Object.values(data.verses).slice(0, 3).join(" ");
-          display.innerText = output || "Verse not found.";
-          readText(output || "Verse not found.");
+          const all = data.verses;
+          let output = "";
+
+          if (start && end && end >= start) {
+            for (let i = start; i <= end; i++) {
+              if (all[i]) output += `${i}. ${all[i]} `;
+            }
+          } else {
+            output = Object.values(all).slice(0, 3).join(" ");
+          }
+
+          display.innerText = output || "Verse(s) not found.";
+          readText(output || "Verse(s) not found.");
         })
         .catch(() => {
           display.innerText = "⚠️ Error fetching scripture.";
@@ -121,11 +133,14 @@
       if (lower.includes("repeat")) return { action: "repeat" };
       if (lower.includes("stop")) return { action: "stop" };
 
-      const match = lower.match(/read\s+(\w+)\s+(\d+)(?:\s+verse\s+(\d+))?/);
+      const match = lower.match(/read\s+(\w+)\s+(\d+)(?:\s+verse(?:s)?\s+(\d+)(?:\s+to\s+(\d+))?)?/);
       if (match) {
         const book = match[1];
         const chapter = match[2];
-        const verses = match[3] ? [match[3]] : ["1", "2", "3"];
+        const start = match[3] ? parseInt(match[3]) : 1;
+        const end = match[4] ? parseInt(match[4]) : start;
+        const verses = [];
+        for (let i = start; i <= end; i++) verses.push(i.toString());
         return { action: "read", book, chapter, verses };
       }
 
