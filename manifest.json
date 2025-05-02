@@ -1,0 +1,23 @@
+{
+  "name": "GraceVoice",
+  "short_name": "GraceVoice",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "GraceVoice is a voice-activated scripture reader designed for hands-free Bible reading and command-based navigation.",
+  "background_color": "#ffffff",
+  "theme_color": "#3b5998",
+  "icons": [
+    {
+      "src": "/public/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/public/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
