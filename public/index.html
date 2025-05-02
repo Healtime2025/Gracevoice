@@ -63,7 +63,7 @@
       padding: 4px;
       border-radius: 5px;
     }
-      .night-mode {
+    .night-mode {
       background-color: #1c1c1c;
       color: #e0e0e0;
     }
@@ -87,11 +87,10 @@
 </head>
 <body>
   <h1>📖 GraceVoice</h1>
-  
 
-  
-    <div>
-      <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
+  <div>
+    <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
+  </div>
 
   <div>
     <button onclick="readText()">▶️ Start Reading (Full)</button>
@@ -104,7 +103,6 @@
     <select id="bookSelect">
       <option value="Genesis">Genesis</option>
       <option value="Exodus">Exodus</option>
-      <!-- full list omitted for brevity -->
       <option value="Revelation">Revelation</option>
     </select>
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
@@ -119,168 +117,160 @@
 
   <div id="voiceFeedback"></div>
 
-  <script>
-    const display = document.getElementById("verseDisplay");
-    const feedback = document.getElementById("voiceFeedback");
-    let lastReadText = "";
-    window.graceQueue = [];
-    let selectedVoice = null;
+  <div>
+    <button onclick="window.location.href='settings.html'">⚙️ Settings</button>
+    <button onclick="window.location.href='https://gracevoice.example.com/subscribe'" style="background-color:#28a745; margin-left: 10px;">💖 Donate / Subscribe</button>
+  </div>
 
-    function readText(text = display.innerText) {
-      const speech = new SpeechSynthesisUtterance(text);
-      speech.voice = selectedVoice || speechSynthesis.getVoices()[0];
-      speech.pitch = 1;
-      speech.rate = 0.95;
-      window.speechSynthesis.speak(speech);
-      lastReadText = text;
-    }
+<script>
+  const display = document.getElementById("verseDisplay");
+  const feedback = document.getElementById("voiceFeedback");
+  let lastReadText = "";
+  window.graceQueue = [];
+  let selectedVoice = null;
 
-    function readSelected() {
-      const book = document.getElementById("bookSelect").value;
-      const chapter = document.getElementById("chapterInput").value;
-      const startVerse = parseInt(document.getElementById("startVerseInput").value);
-      const endVerse = parseInt(document.getElementById("endVerseInput").value);
-      if (!book || !chapter) return alert("Please select book and chapter");
-
-      const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          let html = "";
-          let spoken = [];
-          if (!isNaN(startVerse) && !isNaN(endVerse)) {
-            for (let i = startVerse; i <= endVerse; i++) {
-              if (data.verses[i]) {
-                html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
-                spoken.push({ id: `verse-${i}`, text: data.verses[i] });
-              }
-            }
-          } else if (!isNaN(startVerse)) {
-            const txt = data.verses[startVerse];
-            html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
-            spoken.push({ id: `verse-${startVerse}`, text: txt });
-          } else {
-            const keys = Object.keys(data.verses).slice(0, 3);
-            keys.forEach(k => {
-              html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]}</span>`;
-              spoken.push({ id: `verse-${k}`, text: data.verses[k] });
-            });
-          }
-          display.innerHTML = html;
-          window.graceQueue = spoken;
-          lastReadText = spoken.map(v => `${v.text}`).join(" ");
-          readText(lastReadText);
-        });
-    }
-
-    function readHighlighted() {
-      if (!window.graceQueue || window.graceQueue.length === 0) return;
-      let index = 0;
-      function speakNext() {
-        if (index >= window.graceQueue.length) return;
-        const { id, text } = window.graceQueue[index];
-        document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
-        const el = document.getElementById(id);
-        if (el) {
-          el.classList.add('active-verse');
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
-        utter.pitch = 1;
-        utter.rate = 0.95;
-        utter.onend = () => { index++; speakNext(); };
-        speechSynthesis.speak(utter);
-      }
-      speakNext();
-    }
-
-    function parseVoiceCommand(command) {
-      const lower = command.toLowerCase();
-      if (lower.includes("repeat")) return { action: "repeat" };
-      if (lower.includes("stop")) return { action: "stop" };
-
-      const match = lower.match(/read\s+(\w+)\s+(\d+)(?:\s+verse\s+(\d+)(?:\s+to\s+(\d+))?)?/);
-      if (match) {
-        const book = match[1];
-        const chapter = match[2];
-        const startVerse = match[3];
-        const endVerse = match[4];
-        const verses = startVerse && endVerse
-          ? Array.from({ length: endVerse - startVerse + 1 }, (_, i) => (parseInt(startVerse) + i).toString())
-          : startVerse ? [startVerse] : ["1", "2", "3"];
-        return { action: "read", book, chapter, verses };
-      }
-      return { action: "unknown" };
-    }
-
-    function startVoice() {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.start();
-
-      recognition.onresult = async function(event) {
-        const transcript = event.results[0][0].transcript;
-        feedback.textContent = `Heard: "${transcript}"`;
-
-        const parsed = parseVoiceCommand(transcript);
-        if (parsed.action === "read") {
-          const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}`;
-          try {
-            const response = await fetch(url);
-            const data = await response.json();
-            const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean);
-            display.innerText = verses.join(" ") || "Verse not found.";
-            lastReadText = verses.join(" ");
-            readText(lastReadText);
-          } catch {
-            display.innerText = "⚠️ Error retrieving verses.";
-          }
-        } else if (parsed.action === "repeat") {
-          readText(lastReadText);
-        } else if (parsed.action === "stop") {
-          speechSynthesis.cancel();
-        } else {
-          display.innerText = "Sorry, I didn't understand.";
-          readText("Sorry, I didn't understand that.");
-        }
-      };
-
-      recognition.onerror = function(event) {
-        feedback.textContent = "Voice error: " + event.error;
-      };
-    }
-
-    function populateVoices() {
-      const voiceSelect = document.getElementById("voiceSelect");
-      const voices = speechSynthesis.getVoices();
-      voiceSelect.innerHTML = "";
-      voices.forEach((voice, i) => {
-        const option = document.createElement("option");
-        option.value = i;
-        option.text = `${voice.name} (${voice.lang})`;
-        voiceSelect.appendChild(option);
-      });
-      const savedIndex = localStorage.getItem("graceVoiceIndex");
-      if (savedIndex && voices[savedIndex]) {
-        voiceSelect.value = savedIndex;
-        selectedVoice = voices[savedIndex];
-      } else {
-        selectedVoice = voices[0];
-      }
-      voiceSelect.onchange = () => {
-        selectedVoice = voices[voiceSelect.value];
-        localStorage.setItem("graceVoiceIndex", voiceSelect.value);
-      };
-    }
-
-    speechSynthesis.onvoiceschanged = populateVoices;
-    function toggleSettings() {
-    const panel = document.getElementById("settingsPanel");
-    panel.style.display = panel.style.display === "none" ? "block" : "none";
+  function readText(text = display.innerText) {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.voice = selectedVoice || speechSynthesis.getVoices()[0];
+    speech.pitch = 1;
+    speech.rate = 0.95;
+    window.speechSynthesis.speak(speech);
+    lastReadText = text;
   }
+
+  function stopSpeech() {
+    speechSynthesis.cancel();
+  }
+
+  function readSelected() {
+    const book = document.getElementById("bookSelect").value;
+    const chapter = document.getElementById("chapterInput").value;
+    const startVerse = parseInt(document.getElementById("startVerseInput").value);
+    const endVerse = parseInt(document.getElementById("endVerseInput").value);
+    if (!book || !chapter) return alert("Please select book and chapter");
+
+    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        let html = "";
+        let spoken = [];
+        if (!isNaN(startVerse) && !isNaN(endVerse)) {
+          for (let i = startVerse; i <= endVerse; i++) {
+            if (data.verses[i]) {
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
+              spoken.push({ id: `verse-${i}`, text: data.verses[i] });
+            }
+          }
+        } else if (!isNaN(startVerse)) {
+          const txt = data.verses[startVerse];
+          html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
+          spoken.push({ id: `verse-${startVerse}`, text: txt });
+        } else {
+          const keys = Object.keys(data.verses).slice(0, 3);
+          keys.forEach(k => {
+            html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]}</span>`;
+            spoken.push({ id: `verse-${k}`, text: data.verses[k] });
+          });
+        }
+        display.innerHTML = html;
+        window.graceQueue = spoken;
+        lastReadText = spoken.map(v => `${v.text}`).join(" ");
+        readText(lastReadText);
+      });
+  }
+
+  function readHighlighted() {
+    if (!window.graceQueue || window.graceQueue.length === 0) return;
+    let index = 0;
+    function speakNext() {
+      if (index >= window.graceQueue.length) return;
+      const { id, text } = window.graceQueue[index];
+      document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('active-verse');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
+      utter.pitch = 1;
+      utter.rate = 0.95;
+      utter.onend = () => { index++; speakNext(); };
+      speechSynthesis.speak(utter);
+    }
+    speakNext();
+  }
+
+  function parseVoiceCommand(command) {
+    const lower = command.toLowerCase();
+    if (lower.includes("repeat")) return { action: "repeat" };
+    if (lower.includes("stop")) return { action: "stop" };
+
+    const match = lower.match(/read\s+(\w+)\s+(\d+)(?:\s+verse\s+(\d+)(?:\s+to\s+(\d+))?)?/);
+    if (match) {
+      const book = match[1];
+      const chapter = match[2];
+      const startVerse = match[3];
+      const endVerse = match[4];
+      const verses = startVerse && endVerse
+        ? Array.from({ length: endVerse - startVerse + 1 }, (_, i) => (parseInt(startVerse) + i).toString())
+        : startVerse ? [startVerse] : ["1", "2", "3"];
+      return { action: "read", book, chapter, verses };
+    }
+    return { action: "unknown" };
+  }
+
+  function startVoice() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.start();
+
+    recognition.onresult = async function(event) {
+      const transcript = event.results[0][0].transcript;
+      feedback.textContent = `Heard: "${transcript}"`;
+
+      const parsed = parseVoiceCommand(transcript);
+      if (parsed.action === "read") {
+        const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}`;
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean);
+          display.innerText = verses.join(" ") || "Verse not found.";
+          lastReadText = verses.join(" ");
+          readText(lastReadText);
+        } catch {
+          display.innerText = "⚠️ Error retrieving verses.";
+        }
+      } else if (parsed.action === "repeat") {
+        readText(lastReadText);
+      } else if (parsed.action === "stop") {
+        speechSynthesis.cancel();
+      } else {
+        display.innerText = "Sorry, I didn't understand.";
+        readText("Sorry, I didn't understand that.");
+      }
+    };
+
+    recognition.onerror = function(event) {
+      feedback.textContent = "Voice error: " + event.error;
+    };
+  }
+
+  function populateVoices() {
+    const voices = speechSynthesis.getVoices();
+    const savedIndex = localStorage.getItem("graceVoiceIndex");
+    if (savedIndex && voices[savedIndex]) {
+      selectedVoice = voices[savedIndex];
+    } else {
+      selectedVoice = voices[0];
+    }
+  }
+
+  speechSynthesis.onvoiceschanged = populateVoices;
 
   function toggleTheme() {
     document.body.classList.toggle("night-mode");
@@ -293,39 +283,7 @@
       document.getElementById("themeToggle").checked = true;
     }
   };
-  function stopSpeech() {
-    speechSynthesis.cancel();
-  }
 </script>
-  <div>
-    <button onclick="toggleSettings()">⚙️ Settings</button>
-  </div>
-  <div id="settingsPanel" style="display: none; margin-top: 20px; padding: 20px; background: #fff; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-    <h3>Settings</h3>
-    <div>
-      <label for="voiceSelect"><b>Voice:</b></label>
-      <select id="voiceSelect"></select>
-    </div>
-    <div>
-      <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
-    </div>
-    $1
-      <div style="margin-top:10px;"><a href="#" onclick="alert('Coming soon: full voice command help.')">More Help</a></div>
-    </div>
-    <div>
-      <label for="voiceSelect"><b>Voice:</b></label>
-      <select id="voiceSelect"></select>
-    </div>
-    <div>
-      <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
-    </div>
-    <div>
-      <p><b>Commands:</b><br>
-      Say: "Read Genesis 1 verse 1"<br>
-      Say: "Repeat" to hear last again<br>
-      Say: "Stop" to cancel reading</p>
-    </div>
-  </div>
 </body>
 </html>
 
