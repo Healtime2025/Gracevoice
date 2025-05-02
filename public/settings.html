@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GraceVoice Settings</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 28px;
+      color: #2c3e50;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+      border: none;
+      background: #1976d2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #145a9e;
+    }
+    select {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .night-mode {
+      background-color: #1c1c1c;
+      color: #e0e0e0;
+    }
+    .night-mode button {
+      background-color: #333;
+      color: #fff;
+    }
+    .night-mode button:hover {
+      background-color: #555;
+    }
+    .night-mode select {
+      background-color: #444;
+      color: #fff;
+      border-color: #666;
+    }
+  </style>
+</head>
+<body>
+  <button onclick="window.location.href='index.html'">🏠 Home</button>
+  <h1>⚙️ GraceVoice Settings</h1>
+
+  <div>
+    <label for="voiceSelect"><b>Preferred Voice:</b></label>
+    <select id="voiceSelect"></select>
+  </div>
+
+  <div>
+    <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <h3>🎙️ Voice Commands Guide</h3>
+    <p>
+      • Say "Read Genesis 1 verse 1"<br>
+      • Say "Read John 3 verse 16 to 18"<br>
+      • Say "Repeat" to hear last again<br>
+      • Say "Stop" or "Pause" to cancel reading
+    </p>
+    <div><a href="#" onclick="alert('More help coming soon.')">🔎 More Help</a></div>
+  </div>
+
+  <script>
+    // Theme toggle
+    function toggleTheme() {
+      document.body.classList.toggle("night-mode");
+      localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
+    }
+
+    // Voice selector
+    function populateVoices() {
+      const voiceSelect = document.getElementById("voiceSelect");
+      const voices = speechSynthesis.getVoices();
+      voiceSelect.innerHTML = "";
+      voices.forEach((voice, i) => {
+        const option = document.createElement("option");
+        option.value = i;
+        option.text = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+      });
+      const savedIndex = localStorage.getItem("graceVoiceIndex");
+      if (savedIndex && voices[savedIndex]) {
+        voiceSelect.value = savedIndex;
+      }
+      voiceSelect.onchange = () => {
+        localStorage.setItem("graceVoiceIndex", voiceSelect.value);
+      };
+    }
+
+    speechSynthesis.onvoiceschanged = populateVoices;
+
+    // Apply saved theme
+    window.onload = () => {
+      if (localStorage.getItem("graceTheme") === "dark") {
+        document.body.classList.add("night-mode");
+        document.getElementById("themeToggle").checked = true;
+      }
+      populateVoices();
+    };
+  </script>
+</body>
+</html>
