@@ -14,7 +14,7 @@
 - 👓 **Large-font verse display** – ideal for elderly and low-vision users
 - 📱 **PWA-ready** – installable on Android, iPhone, or desktop
 - 🌐 **Offline support** via service worker
-- ⚙️ **CORS-safe API proxy** for secure Google Apps Script usage
+- ⚙️ **Secure API proxy** to [Bible-API.com](https://bible-api.com) with KJV + WEB support
 
 ---
 
@@ -22,14 +22,16 @@
 
 ```bash
 .
+├── api/
+│   └── fetch-script.js        # Proxy to Bible-API.com (KJV + WEB)
 ├── public/
+│   ├── index.html             # Voice + manual scripture interface
+│   ├── reader.html            # Auto reader (read?book=John&chapter=3)
 │   ├── icon-192.png
 │   ├── icon-512.png
 │   ├── manifest.json
 │   └── sw.js
-├── api/
-│   └── fetch-script.js        # Serverless proxy to Google Apps Script
-├── index.html                 # Main voice + manual scripture interface
-├── package.json               # Includes node-fetch and deploy scripts
-├── README.md
-└── vercel.json                # (Optional) Route rewrites for cleaner URLs
+├── vercel.json                # Clean route rewrites
+├── package.json               # Metadata + node-fetch
+├── .gitignore                 # Clean repo settings
+└── README.md
