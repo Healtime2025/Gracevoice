@@ -62,7 +62,7 @@
     <select id="bookSelect">
       <option value="Genesis">Genesis</option>
       <option value="Exodus">Exodus</option>
-      <!-- (List all 66 books here) -->
+      <!-- (Add all books) -->
       <option value="Revelation">Revelation</option>
     </select>
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
@@ -80,13 +80,16 @@
   </div>
 
   <button onclick="readText()">▶️ Start Reading</button>
-  <button onclick="startVoice()">🎧 Voice Command</button>
+  <button onclick="startVoice()">🎙️ Voice Command</button>
   <div id="voiceFeedback"></div>
 
   <script>
     const display = document.getElementById("verseDisplay");
     const feedback = document.getElementById("voiceFeedback");
     let lastReadText = "";
+    let currentBook = "";
+    let currentChapter = 1;
+    let lastVerseRead = 1;
 
     function readText(text = display.innerText) {
       const speech = new SpeechSynthesisUtterance(text);
@@ -111,13 +114,19 @@
         .then(data => {
           const all = data.verses;
           let output = "";
+
           if (start && end && end >= start) {
             for (let i = start; i <= end; i++) {
               if (all[i]) output += `${i}. ${all[i]} `;
+              lastVerseRead = i;
             }
           } else {
             output = Object.values(all).slice(0, 3).join(" ");
+            lastVerseRead = 3;
           }
+
+          currentBook = book;
+          currentChapter = parseInt(chapter);
           display.innerText = output || "Verse(s) not found.";
           readText(output || "Verse(s) not found.");
         })
@@ -126,23 +135,58 @@
         });
     }
 
+    function readNextVerses() {
+      const translation = document.getElementById("translationSelect").value;
+      const url = `/api/fetch-script.js?book=${currentBook}&chapter=${currentChapter}&translation=${translation}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const all = data.verses;
+          let output = "";
+          for (let i = lastVerseRead + 1; i <= lastVerseRead + 3; i++) {
+            if (all[i]) output += `${i}. ${all[i]} `;
+          }
+          lastVerseRead += 3;
+          display.innerText = output || "No more verses.";
+          readText(output || "No more verses.");
+        });
+    }
+
+    function saveBookmark() {
+      const book = currentBook;
+      const chapter = currentChapter;
+      const text = display.innerText;
+      const bookmark = { book, chapter, text, timestamp: new Date().toISOString() };
+      const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+      bookmarks.push(bookmark);
+      localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
+      alert("✅ Bookmark saved.");
+    }
+
+    async function fetchDailyVerse() {
+      try {
+        const response = await fetch("https://beta.ourmanna.com/api/v1/get/?format=json");
+        const data = await response.json();
+        const verse = data.verse.details.text;
+        const reference = data.verse.details.reference;
+        display.innerText = `${verse} — ${reference}`;
+        readText(`${verse}. ${reference}`);
+      } catch (error) {
+        display.innerText = "⚠️ Could not load daily verse.";
+        feedback.textContent = error.message;
+      }
+    }
+
     function parseVoiceCommand(transcript) {
       const lower = transcript.toLowerCase().trim();
       if (lower.includes("repeat")) return { action: "repeat" };
       if (lower.includes("stop")) return { action: "stop" };
       if (lower.includes("restart")) return { action: "restart" };
       if (lower.includes("next")) return { action: "next" };
-      if (lower.includes("previous")) return { action: "previous" };
-      if (lower.includes("switch to kjv") || lower.includes("use kjv")) return { action: "setTranslation", translation: "kjv" };
-      if (lower.includes("switch to web") || lower.includes("use web")) return { action: "setTranslation", translation: "web" };
-      if (lower.includes("daily verse") || lower.includes("verse of the day")) return { action: "dailyVerse" };
-      if (lower.includes("inspire me")) return { action: "randomEncouragement" };
-      if (lower.includes("bookmark this")) return { action: "bookmark" };
-      if (lower.includes("show bookmarks")) return { action: "showBookmarks" };
-      if (lower.includes("favorite verse")) return { action: "readFavorite" };
+      if (lower.includes("bookmark")) return { action: "bookmark" };
+      if (lower.includes("daily verse")) return { action: "dailyVerse" };
 
-      const pattern = /read\s+(\d?\s?[a-z]+)\s+(\d+)(?:\s+verse(?:s)?\s+(\d+)(?:\s+to\s+(\d+))?)?/i;
-      const match = lower.match(pattern);
+      const match = lower.match(/read\s+(\d?\s?[a-z]+)\s+(\d+)(?:\s+verse(?:s)?\s+(\d+)(?:\s+to\s+(\d+))?)?/i);
       if (match) {
         const book = match[1].replace(/\s+/g, " ").trim();
         const chapter = match[2];
@@ -152,9 +196,6 @@
         for (let i = start; i <= end; i++) verses.push(i.toString());
         return { action: "read", book, chapter, verses };
       }
-
-      const jumpMatch = lower.match(/go to chapter (\d+)/);
-      if (jumpMatch) return { action: "goToChapter", chapter: parseInt(jumpMatch[1]) };
 
       return { action: "unknown", transcript: lower };
     }
@@ -171,26 +212,25 @@
         feedback.textContent = `Heard: "${transcript}"`;
         const parsed = parseVoiceCommand(transcript);
 
-        const translation = document.getElementById("translationSelect").value;
-
         if (parsed.action === "read") {
-          const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}&translation=${translation}`;
-          try {
-            const response = await fetch(url);
-            const data = await response.json();
-            const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean).join(" ");
-            display.innerText = verses || "Verse not found.";
-            readText(verses || "Verse not found.");
-          } catch {
-            display.innerText = "⚠️ Error retrieving verses.";
-          }
+          document.getElementById("bookSelect").value = parsed.book;
+          document.getElementById("chapterInput").value = parsed.chapter;
+          document.getElementById("startVerseInput").value = parsed.verses[0];
+          document.getElementById("endVerseInput").value = parsed.verses[parsed.verses.length - 1];
+          readSelected();
         } else if (parsed.action === "repeat") {
           readText(lastReadText);
         } else if (parsed.action === "stop") {
           speechSynthesis.cancel();
+        } else if (parsed.action === "next") {
+          readNextVerses();
+        } else if (parsed.action === "bookmark") {
+          saveBookmark();
+        } else if (parsed.action === "dailyVerse") {
+          fetchDailyVerse();
         } else {
-          display.innerText = `Command received: ${parsed.action}`;
-          readText(`Action triggered: ${parsed.action}`);
+          display.innerText = `Unrecognized: ${parsed.transcript}`;
+          readText("Sorry, I didn't understand.");
         }
       };
 
