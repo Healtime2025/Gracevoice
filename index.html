@@ -82,7 +82,7 @@
         const match = transcript.match(/read (\w+) (\d+)(?: verse (\d+)(?: to (\d+))?)?/i);
         if (match) {
           const [, book, chapter, verseStart, verseEnd] = match;
-          let response = await fetch(`https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_URL/exec?book=${book}&chapter=${chapter}`);
+          let response = await fetch(`https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzntpRTmAaDZSP3LJn1X-3nsJeyAr6AMPGg41Du9_Hnh0XFsNwI0o2O6hUVEzEFeT529Q/exec?book=${book}&chapter=${chapter}`);
           let data = await response.json();
           let verses = data.verses;
           let output = "";
