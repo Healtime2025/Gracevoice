@@ -228,6 +228,8 @@
           saveBookmark();
         } else if (parsed.action === "dailyVerse") {
           fetchDailyVerse();
+        } else if (parsed.action === "showBookmarks") {
+          showBookmarks();
         } else {
           display.innerText = `Unrecognized: ${parsed.transcript}`;
           readText("Sorry, I didn't understand.");
@@ -238,6 +240,36 @@
         feedback.textContent = "Voice error: " + event.error;
       };
     }
+  function showBookmarks() {
+      const modal = document.getElementById("bookmarkModal");
+      const list = document.getElementById("bookmarkList");
+      const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+
+      if (bookmarks.length === 0) {
+        list.innerHTML = "<p>No bookmarks saved yet.</p>";
+      } else {
+        list.innerHTML = bookmarks.map((b, i) => `
+          <div style="margin-bottom:10px;">
+            <strong>${b.book} ${b.chapter}</strong> – <small>${new Date(b.timestamp).toLocaleString()}</small>
+            <p style="margin:5px 0;">${b.text}</p>
+            <button onclick="readText(\`${b.text.replace(/`/g, '\`')}\`)">🔊 Read</button>
+          </div>
+        `).join("");
+      }
+      modal.style.display = "block";
+    }
+
+    function closeBookmarkModal() {
+      document.getElementById("bookmarkModal").style.display = "none";
+    }
+
   </script>
+<!-- Bookmark Modal -->
+  <div id="bookmarkModal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); background:white; padding:20px; border-radius:10px; max-width:90%; box-shadow:0 0 20px rgba(0,0,0,0.3); z-index:999;">
+    <h3>📚 Your Bookmarks</h3>
+    <div id="bookmarkList" style="text-align:left; max-height:300px; overflow:auto;"></div>
+    <button onclick="closeBookmarkModal()">Close</button>
+  </div>
+
 </body>
 </html>
