@@ -1,0 +1,19 @@
+{
+  "name": "gracevoice",
+  "version": "1.0.0",
+  "description": "GraceVoice: Voice-driven Bible reader with natural language input.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "start": "vercel start"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "license": "MIT"
+}
