@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GraceVoice Reader</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 28px;
+      color: #2c3e50;
+    }
+    .verse-box {
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 800px;
+      background: white;
+      border-radius: 10px;
+      font-size: 24px;
+      line-height: 1.8;
+      color: #333;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      text-align: left;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      margin: 10px 5px;
+      border: none;
+      background: #1976d2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #145a9e;
+    }
+    #bookRef {
+      margin-top: 10px;
+      font-style: italic;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <h1>📖 GraceVoice Reader</h1>
+  <div id="bookRef"></div>
+  <div class="verse-box" id="verseBox">Loading scripture...</div>
+  <div>
+    <button onclick="playVerses()">▶️ Read</button>
+    <button onclick="repeatVerses()">🔁 Repeat</button>
+    <button onclick="stopReading()">⏹️ Stop</button>
+  </div>
+
+  <script>
+    const verseBox = document.getElementById("verseBox");
+    const bookRef = document.getElementById("bookRef");
+    let fullText = "";
+
+    // 🔍 Extract query parameters from URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    // 🎧 Read aloud
+    function playVerses(text = fullText) {
+      if (!text) return;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function repeatVerses() {
+      stopReading();
+      playVerses();
+    }
+
+    function stopReading() {
+      window.speechSynthesis.cancel();
+    }
+
+    // 🚀 Load scripture
+    async function loadScripture() {
+      const book = getQueryParam("book");
+      const chapter = getQueryParam("chapter");
+      if (!book || !chapter) {
+        verseBox.textContent = "❌ Missing book or chapter in the URL.";
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/fetch-script.js?book=${book}&chapter=${chapter}`);
+        const data = await response.json();
+
+        if (!data.verses || Object.keys(data.verses).length === 0) {
+          verseBox.textContent = "⚠️ No verses found for this chapter.";
+          return;
+        }
+
+        bookRef.textContent = `${data.book} Chapter ${data.chapter}`;
+        fullText = Object.entries(data.verses)
+          .map(([v, t]) => `${v}. ${t}`)
+          .join(" ");
+
+        verseBox.innerHTML = Object.entries(data.verses)
+          .map(([v, t]) => `<p><strong>${v}</strong> ${t}</p>`)
+          .join("");
+
+        playVerses(); // Auto-read on load
+      } catch (error) {
+        verseBox.textContent = "❌ Error loading scripture.";
+        console.error(error);
+      }
+    }
+
+    // 🚦 Init on load
+    window.onload = loadScripture;
+  </script>
+</body>
+</html>
