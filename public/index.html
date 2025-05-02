@@ -22,10 +22,11 @@
       max-width: 800px;
       background: white;
       border-radius: 10px;
-      font-size: 28px;
+      font-size: 24px;
       line-height: 1.6;
       color: #333;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: left;
     }
     button {
       padding: 15px 25px;
@@ -52,6 +53,16 @@
       border-radius: 6px;
       border: 1px solid #ccc;
     }
+    .verse-line {
+      display: block;
+      margin: 8px 0;
+    }
+    .active-verse {
+      background-color: #e0f0ff;
+      font-weight: bold;
+      padding: 4px;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -59,16 +70,77 @@
   <p>Say: "Read Genesis 1 verse 1", or select manually below:</p>
 
   <div>
-    <button onclick="readText()">▶️ Start Reading</button>
+    <button onclick="readHighlighted()">▶️ Start Reading</button>
     <button onclick="startVoice()">🎙️ Voice Command</button>
   </div>
 
   <div>
     <select id="bookSelect">
-      <!-- 66 books -->
       <option value="Genesis">Genesis</option>
       <option value="Exodus">Exodus</option>
-      <!-- (list truncated for brevity) -->
+      <option value="Leviticus">Leviticus</option>
+      <option value="Numbers">Numbers</option>
+      <option value="Deuteronomy">Deuteronomy</option>
+      <option value="Joshua">Joshua</option>
+      <option value="Judges">Judges</option>
+      <option value="Ruth">Ruth</option>
+      <option value="1Samuel">1 Samuel</option>
+      <option value="2Samuel">2 Samuel</option>
+      <option value="1Kings">1 Kings</option>
+      <option value="2Kings">2 Kings</option>
+      <option value="1Chronicles">1 Chronicles</option>
+      <option value="2Chronicles">2 Chronicles</option>
+      <option value="Ezra">Ezra</option>
+      <option value="Nehemiah">Nehemiah</option>
+      <option value="Esther">Esther</option>
+      <option value="Job">Job</option>
+      <option value="Psalms">Psalms</option>
+      <option value="Proverbs">Proverbs</option>
+      <option value="Ecclesiastes">Ecclesiastes</option>
+      <option value="SongOfSongs">Song of Songs</option>
+      <option value="Isaiah">Isaiah</option>
+      <option value="Jeremiah">Jeremiah</option>
+      <option value="Lamentations">Lamentations</option>
+      <option value="Ezekiel">Ezekiel</option>
+      <option value="Daniel">Daniel</option>
+      <option value="Hosea">Hosea</option>
+      <option value="Joel">Joel</option>
+      <option value="Amos">Amos</option>
+      <option value="Obadiah">Obadiah</option>
+      <option value="Jonah">Jonah</option>
+      <option value="Micah">Micah</option>
+      <option value="Nahum">Nahum</option>
+      <option value="Habakkuk">Habakkuk</option>
+      <option value="Zephaniah">Zephaniah</option>
+      <option value="Haggai">Haggai</option>
+      <option value="Zechariah">Zechariah</option>
+      <option value="Malachi">Malachi</option>
+      <option value="Matthew">Matthew</option>
+      <option value="Mark">Mark</option>
+      <option value="Luke">Luke</option>
+      <option value="John">John</option>
+      <option value="Acts">Acts</option>
+      <option value="Romans">Romans</option>
+      <option value="1Corinthians">1 Corinthians</option>
+      <option value="2Corinthians">2 Corinthians</option>
+      <option value="Galatians">Galatians</option>
+      <option value="Ephesians">Ephesians</option>
+      <option value="Philippians">Philippians</option>
+      <option value="Colossians">Colossians</option>
+      <option value="1Thessalonians">1 Thessalonians</option>
+      <option value="2Thessalonians">2 Thessalonians</option>
+      <option value="1Timothy">1 Timothy</option>
+      <option value="2Timothy">2 Timothy</option>
+      <option value="Titus">Titus</option>
+      <option value="Philemon">Philemon</option>
+      <option value="Hebrews">Hebrews</option>
+      <option value="James">James</option>
+      <option value="1Peter">1 Peter</option>
+      <option value="2Peter">2 Peter</option>
+      <option value="1John">1 John</option>
+      <option value="2John">2 John</option>
+      <option value="3John">3 John</option>
+      <option value="Jude">Jude</option>
       <option value="Revelation">Revelation</option>
     </select>
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
@@ -88,14 +160,6 @@
     const feedback = document.getElementById("voiceFeedback");
     let lastReadText = "";
 
-    function readText(text = display.innerText) {
-      const speech = new SpeechSynthesisUtterance(text);
-      speech.pitch = 1;
-      speech.rate = 0.95;
-      window.speechSynthesis.speak(speech);
-      lastReadText = text;
-    }
-
     function readSelected() {
       const book = document.getElementById("bookSelect").value;
       const chapter = document.getElementById("chapterInput").value;
@@ -107,83 +171,48 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          let output = "";
+          let html = "";
+          let spoken = [];
           if (!isNaN(startVerse) && !isNaN(endVerse)) {
-            const range = [];
             for (let i = startVerse; i <= endVerse; i++) {
-              if (data.verses[i]) range.push(data.verses[i]);
+              if (data.verses[i]) {
+                html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
+                spoken.push({ id: `verse-${i}`, text: data.verses[i] });
+              }
             }
-            output = range.join(" ");
           } else if (!isNaN(startVerse)) {
-            output = data.verses[startVerse] || "Verse not found.";
+            const txt = data.verses[startVerse];
+            html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
+            spoken.push({ id: `verse-${startVerse}`, text: txt });
           } else {
-            output = Object.values(data.verses).slice(0, 3).join(" ");
+            const keys = Object.keys(data.verses).slice(0, 3);
+            keys.forEach(k => {
+              html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]}</span>`;
+              spoken.push({ id: `verse-${k}`, text: data.verses[k] });
+            });
           }
-          display.innerText = output || "Verse not found.";
-          readText(output || "Verse not found.");
-        })
-        .catch(() => {
-          display.innerText = "⚠️ Error fetching scripture.";
+          display.innerHTML = html;
+          window.graceQueue = spoken;
         });
     }
 
-    function parseVoiceCommand(command) {
-      const lower = command.toLowerCase();
-
-      if (lower.includes("repeat")) return { action: "repeat" };
-      if (lower.includes("stop")) return { action: "stop" };
-
-      const match = lower.match(/read\s+(\w+)\s+(\d+)(?:\s+verse\s+(\d+)(?:\s+to\s+(\d+))?)?/);
-      if (match) {
-        const book = match[1];
-        const chapter = match[2];
-        const startVerse = match[3];
-        const endVerse = match[4];
-        const verses = startVerse && endVerse
-          ? Array.from({ length: endVerse - startVerse + 1 }, (_, i) => (parseInt(startVerse) + i).toString())
-          : startVerse ? [startVerse] : ["1", "2", "3"];
-        return { action: "read", book, chapter, verses };
-      }
-
-      return { action: "unknown" };
-    }
-
-    function startVoice() {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.start();
-
-      recognition.onresult = async function(event) {
-        const transcript = event.results[0][0].transcript;
-        feedback.textContent = `Heard: "${transcript}"`;
-
-        const parsed = parseVoiceCommand(transcript);
-        if (parsed.action === "read") {
-          const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}`;
-          try {
-            const response = await fetch(url);
-            const data = await response.json();
-            const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean).join(" ");
-            display.innerText = verses || "Verse not found.";
-            readText(verses || "Verse not found.");
-          } catch {
-            display.innerText = "⚠️ Error retrieving verses.";
-          }
-        } else if (parsed.action === "repeat") {
-          readText(lastReadText);
-        } else if (parsed.action === "stop") {
-          speechSynthesis.cancel();
-        } else {
-          display.innerText = "Sorry, I didn't understand.";
-          readText("Sorry, I didn't understand that.");
+    function readHighlighted() {
+      if (!window.graceQueue || window.graceQueue.length === 0) return;
+      let index = 0;
+      function speakNext() {
+        if (index >= window.graceQueue.length) return;
+        const { id, text } = window.graceQueue[index];
+        document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add('active-verse');
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-      };
-
-      recognition.onerror = function(event) {
-        feedback.textContent = "Voice error: " + event.error;
-      };
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.onend = () => { index++; speakNext(); };
+        speechSynthesis.speak(utter);
+      }
+      speakNext();
     }
   </script>
 </body>
