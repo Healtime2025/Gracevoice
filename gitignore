@@ -1,0 +1,33 @@
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+
+# Runtime data
+.pnp.*
+.vscode/
+
+# Build output (if added later)
+dist/
+build/
+
+# Vercel CLI & deployment
+.vercel/
+.env
+.env.local
+.env.production
+.env.development
+
+# macOS system files
+.DS_Store
+
+# IDE files
+.idea/
+*.code-workspace
+
+# Optional: ignore icons and cached assets if not required
+# public/icons/
+# public/*.cache
