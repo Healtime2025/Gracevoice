@@ -9,13 +9,13 @@ node_modules/
 # Runtime data
 .pnp.*
 .vscode/
+.vercel/
 
-# Build output (if added later)
+# Build output (optional, if added later)
 dist/
 build/
 
-# Vercel CLI & deployment
-.vercel/
+# Environment variables
 .env
 .env.local
 .env.production
@@ -24,10 +24,10 @@ build/
 # macOS system files
 .DS_Store
 
-# IDE files
+# IDE and project files
 .idea/
 *.code-workspace
 
-# Optional: ignore icons and cached assets if not required
+# Public assets cache (optional)
 # public/icons/
 # public/*.cache
