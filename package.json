@@ -2,12 +2,9 @@
   "name": "gracevoice",
   "version": "1.0.0",
   "description": "GraceVoice: Voice-driven Bible reader with natural language input.",
-  "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build",
-    "start": "vercel start"
+    "build": "echo 'Static frontend – no build step required'"
   },
   "dependencies": {
     "node-fetch": "^3.3.2"
@@ -15,5 +12,10 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "author": "King Solomon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HealTime2025/gracevoice"
+  }
 }
