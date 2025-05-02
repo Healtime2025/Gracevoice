@@ -83,7 +83,7 @@
 
         const parsed = parseVoiceCommand(transcript);
         if (parsed.action === "read") {
-          const url = `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?book=${parsed.book}&chapter=${parsed.chapter}`;
+          const url = `https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzntpRTmAaDZSP3LJn1X-3nsJeyAr6AMPGg41Du9_Hnh0XFsNwI0o2O6hUVEzEFeT529Q/exec?book=${parsed.book}&chapter=${parsed.chapter}`;
           const response = await fetch(url);
           const data = await response.json();
           const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean).join(" ");
