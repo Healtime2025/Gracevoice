@@ -1,123 +1,112 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GraceVoice</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3b5998" />
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js')
-        .then(() => console.log('✅ GraceVoice Service Worker registered'))
-        .catch(err => console.error('❌ SW registration failed:', err));
-    }
-  </script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      padding: 20px;
-      background-color: #f5f5f5;
+      background: #f4f4f4;
       text-align: center;
+      padding: 40px;
     }
-    #verseDisplay {
+    h1 {
+      font-size: 32px;
+      color: #2c3e50;
+    }
+    .scripture-box {
       margin: 30px auto;
       padding: 20px;
+      max-width: 800px;
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 600px;
+      border-radius: 10px;
+      font-size: 28px;
+      line-height: 1.6;
+      color: #333;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     button {
-      background-color: #3b5998;
-      color: white;
-      padding: 12px 20px;
-      font-size: 16px;
+      padding: 15px 25px;
+      font-size: 18px;
+      margin: 10px;
       border: none;
+      background: #1976d2;
+      color: white;
       border-radius: 8px;
       cursor: pointer;
-      margin: 5px;
     }
     button:hover {
-      background-color: #2d4373;
+      background: #145a9e;
+    }
+    #voiceFeedback {
+      margin-top: 10px;
+      font-style: italic;
+      color: #555;
     }
   </style>
 </head>
 <body>
-  <h2>📖 GraceVoice</h2>
-  <p>Say: "Next", "Repeat", or "Stop"</p>
-  <div id="verseDisplay">Click "Start Reading" to begin</div>
-  <button onclick="startReading()">▶ Start Reading</button>
-  <button onclick="startListening()">🎙️ Voice Command</button>
+  <h1>📖 GraceVoice</h1>
+  <p>Say: "Read Genesis 1 verse 1", "Next", "Stop", etc.</p>
+  <div class="scripture-box" id="verseDisplay">
+    Click "Start Reading" or use voice command
+  </div>
+  <button onclick="readText()">▶️ Start Reading</button>
+  <button onclick="startVoice()">🎙️ Voice Command</button>
+  <div id="voiceFeedback"></div>
 
   <script>
-    const verses = [
-      "Does not wisdom call out? Does not understanding raise her voice?",
-      "At the highest point along the way, where the paths meet, she takes her stand;",
-      "Beside the gate leading into the city, at the entrance, she cries aloud:",
-      "To you, O people, I call out; I raise my voice to all mankind.",
-      "You who are simple, gain prudence; you who are foolish, set your hearts on it."
-    ];
+    const display = document.getElementById("verseDisplay");
+    const feedback = document.getElementById("voiceFeedback");
 
-    let currentVerse = 0;
-
-    function speak(text) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1;
-      speechSynthesis.speak(utterance);
+    function readText(text = display.innerText) {
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.pitch = 1;
+      speech.rate = 0.95;
+      window.speechSynthesis.speak(speech);
     }
 
-    function displayVerse(index) {
-      document.getElementById("verseDisplay").textContent = verses[index];
-    }
-
-    function startReading() {
-      currentVerse = 0;
-      displayVerse(currentVerse);
-      speak(verses[currentVerse]);
-    }
-
-    function handleVoiceCommand(command) {
-      if (command.includes("next")) {
-        if (currentVerse < verses.length - 1) {
-          currentVerse++;
-          displayVerse(currentVerse);
-          speak(verses[currentVerse]);
-        } else {
-          speak("You have reached the end of the chapter.");
-        }
-      } else if (command.includes("repeat")) {
-        speak(verses[currentVerse]);
-      } else if (command.includes("stop")) {
-        speechSynthesis.cancel();
-        speak("Reading stopped.");
-      } else {
-        speak("Command not recognized. Say Next, Repeat, or Stop.");
-      }
-    }
-
-    function startListening() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert("Speech recognition not supported in this browser.");
-        return;
-      }
-
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
+    function startVoice() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
-
       recognition.start();
-      recognition.onresult = function(event) {
-        const command = event.results[0][0].transcript.toLowerCase();
-        console.log("You said:", command);
-        handleVoiceCommand(command);
+
+      recognition.onresult = async function(event) {
+        const transcript = event.results[0][0].transcript;
+        feedback.textContent = `Heard: "${transcript}"`;
+
+        const match = transcript.match(/read (\w+) (\d+)(?: verse (\d+)(?: to (\d+))?)?/i);
+        if (match) {
+          const [, book, chapter, verseStart, verseEnd] = match;
+          let response = await fetch(`https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_URL/exec?book=${book}&chapter=${chapter}`);
+          let data = await response.json();
+          let verses = data.verses;
+          let output = "";
+
+          if (verseStart && verseEnd) {
+            for (let i = parseInt(verseStart); i <= parseInt(verseEnd); i++) {
+              if (verses[i]) output += verses[i] + " ";
+            }
+          } else if (verseStart && verses[verseStart]) {
+            output = verses[verseStart];
+          } else {
+            output = Object.values(verses).slice(0, 3).join(" ");
+          }
+
+          display.innerText = output;
+          readText(output);
+        } else {
+          display.innerText = "Sorry, I didn't understand.";
+          readText("Sorry, I didn't understand that.");
+        }
       };
 
       recognition.onerror = function(event) {
-        console.error("Recognition error:", event.error);
-        speak("Sorry, I did not hear you. Please try again.");
+        feedback.textContent = "Voice error: " + event.error;
       };
     }
   </script>
