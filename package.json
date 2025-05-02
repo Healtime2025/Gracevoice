@@ -1,10 +1,13 @@
 {
   "name": "gracevoice",
   "version": "1.0.0",
-  "description": "GraceVoice: Voice-driven Bible reader with natural language input.",
+  "description": "GraceVoice: A voice-activated scripture reader for natural Bible interaction.",
   "type": "module",
   "scripts": {
-    "build": "echo 'Static frontend – no build step required'"
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "build": "echo '📦 Static frontend – no build step required'",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "node-fetch": "^3.3.2"
