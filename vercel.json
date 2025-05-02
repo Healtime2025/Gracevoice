@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/read",
-      "destination": "/public/reader.html"
+      "destination": "/reader.html"
     },
     {
       "source": "/voice",
