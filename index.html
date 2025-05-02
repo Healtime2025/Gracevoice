@@ -64,7 +64,6 @@
       <option value="Exodus">Exodus</option>
       <option value="John">John</option>
       <option value="Matthew">Matthew</option>
-      <!-- Add more books as needed -->
     </select>
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
     <input id="verseInput" type="number" placeholder="Verse" min="1" />
@@ -80,16 +79,17 @@
   <div id="voiceFeedback"></div>
 
   <script src="script/parser.js"></script>
-
   <script>
     const display = document.getElementById("verseDisplay");
     const feedback = document.getElementById("voiceFeedback");
+    let lastReadText = "";
 
     function readText(text = display.innerText) {
       const speech = new SpeechSynthesisUtterance(text);
       speech.pitch = 1;
       speech.rate = 0.95;
       window.speechSynthesis.speak(speech);
+      lastReadText = text;
     }
 
     function readSelected() {
@@ -98,13 +98,16 @@
       const verse = document.getElementById("verseInput").value;
       if (!book || !chapter) return alert("Please select book and chapter");
 
-      const url = `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?book=${book}&chapter=${chapter}`;
+      const url = `/api/script-proxy?book=${book}&chapter=${chapter}`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
           const output = verse ? data.verses[verse] : Object.values(data.verses).slice(0, 3).join(" ");
           display.innerText = output || "Verse not found.";
           readText(output || "Verse not found.");
+        })
+        .catch(err => {
+          display.innerText = "Error loading scripture.";
         });
     }
 
@@ -121,14 +124,18 @@
 
         const parsed = parseVoiceCommand(transcript);
         if (parsed.action === "read") {
-          const url = `https://script.google.com/macros/s/AKfycbzntpRTmAaDZSP3LJn1X-3nsJeyAr6AMPGg41Du9_Hnh0XFsNwI0o2O6hUVEzEFeT529Q/exec?book=${parsed.book}&chapter=${parsed.chapter}`;
-          const response = await fetch(url);
-          const data = await response.json();
-          const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean).join(" ");
-          display.innerText = verses || "Verse not found.";
-          readText(verses || "Verse not found.");
+          const url = `/api/script-proxy?book=${parsed.book}&chapter=${parsed.chapter}`;
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const verses = parsed.verses.map(v => data.verses[v]).filter(Boolean).join(" ");
+            display.innerText = verses || "Verse not found.";
+            readText(verses || "Verse not found.");
+          } catch {
+            display.innerText = "Error fetching scripture.";
+          }
         } else if (parsed.action === "repeat") {
-          readText();
+          readText(lastReadText);
         } else if (parsed.action === "stop") {
           speechSynthesis.cancel();
         } else {
@@ -144,4 +151,3 @@
   </script>
 </body>
 </html>
-
