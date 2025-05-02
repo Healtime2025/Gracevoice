@@ -41,6 +41,17 @@
     button:hover {
       background: #145a9e;
     }
+    .bookmark-btn {
+      padding: 4px 8px;
+      font-size: 12px;
+      margin-left: 8px;
+      background: #ccc;
+      color: #000;
+      border-radius: 4px;
+    }
+    .bookmark-btn:hover {
+      background: #bbb;
+    }
     #voiceFeedback {
       margin-top: 10px;
       font-style: italic;
@@ -160,18 +171,18 @@
         if (!isNaN(startVerse) && !isNaN(endVerse)) {
           for (let i = startVerse; i <= endVerse; i++) {
             if (data.verses[i]) {
-              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button onclick='addBookmark("${book}", ${chapter}, ${i}, \"${data.verses[i].replace(/"/g, '\\"')}\")'>🔖 Bookmark</button></span>`;
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, \"${data.verses[i].replace(/"/g, '\\"')}\")'>🔖</button></span>`;
               spoken.push({ id: `verse-${i}`, text: data.verses[i] });
             }
           }
         } else if (!isNaN(startVerse)) {
           const txt = data.verses[startVerse];
-          html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt} <button onclick='addBookmark("${book}", ${chapter}, ${startVerse}, \"${txt.replace(/"/g, '\\"')}\")'>🔖 Bookmark</button></span>`;
+          html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${startVerse}, \"${txt.replace(/"/g, '\\"')}\")'>🔖</button></span>`;
           spoken.push({ id: `verse-${startVerse}`, text: txt });
         } else {
           const keys = Object.keys(data.verses).slice(0, 3);
           keys.forEach(k => {
-            html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]} <button onclick='addBookmark("${book}", ${chapter}, ${k}, \"${data.verses[k].replace(/"/g, '\\"')}\")'>🔖 Bookmark</button></span>`;
+            html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${k}, \"${data.verses[k].replace(/"/g, '\\"')}\")'>🔖</button></span>`;
             spoken.push({ id: `verse-${k}`, text: data.verses[k] });
           });
         }
@@ -180,6 +191,25 @@
         lastReadText = spoken.map(v => `${v.text}`).join(" ");
         readText(lastReadText);
       });
+  }
+
+  function addBookmark(book, chapter, verse, text) {
+    const note = prompt(`Add a note for ${book} ${chapter}:${verse}`) || "";
+    const entry = { book, chapter, verse, text, note, timestamp: new Date().toISOString() };
+    const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+    bookmarks.push(entry);
+    localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
+    alert("📌 Bookmark saved!");
+  }
+
+  function showBookmarks() {
+    const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+    if (bookmarks.length === 0) return alert("You have no bookmarks yet.");
+    let out = "\n=== My Bookmarks ===\n";
+    bookmarks.forEach(b => {
+      out += `\n📖 ${b.book} ${b.chapter}:${b.verse}\n${b.text}\n📝 Note: ${b.note || "(none)"}\n`;
+    });
+    alert(out);
   }
 
   function readHighlighted() {
@@ -202,6 +232,11 @@
       speechSynthesis.speak(utter);
     }
     speakNext();
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle("night-mode");
+    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
   }
 
   function parseVoiceCommand(command) {
@@ -233,8 +268,8 @@
     recognition.onresult = async function(event) {
       const transcript = event.results[0][0].transcript;
       feedback.textContent = `Heard: "${transcript}"`;
-
       const parsed = parseVoiceCommand(transcript);
+
       if (parsed.action === "read") {
         const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}`;
         try {
@@ -262,22 +297,7 @@
     };
   }
 
-  function populateVoices() {
-    const voices = speechSynthesis.getVoices();
-    const savedIndex = localStorage.getItem("graceVoiceIndex");
-    if (savedIndex && voices[savedIndex]) {
-      selectedVoice = voices[savedIndex];
-    } else {
-      selectedVoice = voices[0];
-    }
-  }
-
   speechSynthesis.onvoiceschanged = populateVoices;
-
-  function toggleTheme() {
-    document.body.classList.toggle("night-mode");
-    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
-  }
 
   window.onload = () => {
     if (localStorage.getItem("graceTheme") === "dark") {
@@ -285,33 +305,6 @@
       document.getElementById("themeToggle").checked = true;
     }
   };
-
-function addBookmark(book, chapter, verse, text) {
-  const note = prompt(`Add a note for ${book} ${chapter}:${verse}`) || "";
-  const entry = {
-    book,
-    chapter,
-    verse,
-    text,
-    note,
-    timestamp: new Date().toISOString()
-  };
-  const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
-  bookmarks.push(entry);
-  localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
-  alert("📌 Bookmark saved!");
-}
-
-function showBookmarks() {
-  const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
-  if (bookmarks.length === 0) return alert("You have no bookmarks yet.");
-  let out = "\n=== My Bookmarks ===\n";
-  bookmarks.forEach(b => {
-    out += `\n📖 ${b.book} ${b.chapter}:${b.verse}\n${b.text}\n📝 Note: ${b.note || "(none)"}\n`; 
-  });
-  alert(out);
-}
 </script>
 </body>
 </html>
-
