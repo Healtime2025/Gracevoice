@@ -78,8 +78,6 @@
   <button onclick="startVoice()">🎙️ Voice Command</button>
   <div id="voiceFeedback"></div>
 
-  <script src="script/parser.js"></script>
-
   <script>
     const display = document.getElementById("verseDisplay");
     const feedback = document.getElementById("voiceFeedback");
@@ -110,6 +108,23 @@
         .catch(() => {
           display.innerText = "⚠️ Error fetching scripture.";
         });
+    }
+
+    function parseVoiceCommand(command) {
+      const lower = command.toLowerCase();
+
+      if (lower.includes("repeat")) return { action: "repeat" };
+      if (lower.includes("stop")) return { action: "stop" };
+
+      const match = lower.match(/read\s+(\w+)\s+(\d+)(?:\s+verse\s+(\d+))?/);
+      if (match) {
+        const book = match[1];
+        const chapter = match[2];
+        const verse = match[3] ? [match[3]] : ["1", "2", "3"]; // read first 3 by default
+        return { action: "read", book, chapter, verses: verse };
+      }
+
+      return { action: "unknown" };
     }
 
     function startVoice() {
@@ -152,3 +167,4 @@
   </script>
 </body>
 </html>
+
