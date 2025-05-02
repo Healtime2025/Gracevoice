@@ -94,6 +94,9 @@
       color: #fff;
       border-color: #666;
     }
+    .bottom-bar {
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
@@ -126,130 +129,167 @@
     Click "Start Reading" or use voice command
   </div>
 
+  <div>
+    <button onclick="showBookmarks()">📄 My Bookmarks</button>
+  </div>
+
   <div id="voiceFeedback"></div>
 
-  <div style="margin-top: 40px">
+  <div class="bottom-bar">
     <button onclick="window.location.href='https://gracevoice-settings.example.com'">⚙️ Settings</button>
     <button onclick="window.location.href='https://gracevoice.example.com/subscribe'" style="background-color:#28a745; margin-left: 10px;">💖 Donate / Subscribe</button>
   </div>
 
-<script>
-  const display = document.getElementById("verseDisplay");
-  const feedback = document.getElementById("voiceFeedback");
-  let lastReadText = "";
-  window.graceQueue = [];
-  let selectedVoice = null;
+  <script>
+    const display = document.getElementById("verseDisplay");
+    const feedback = document.getElementById("voiceFeedback");
+    let lastReadText = "";
+    window.graceQueue = [];
+    let selectedVoice = null;
 
-  function readText(text = display.innerText) {
-    const voices = speechSynthesis.getVoices();
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.voice = selectedVoice || voices[0];
-    speech.pitch = 1;
-    speech.rate = 0.95;
-    speechSynthesis.cancel(); // stop current
-    speechSynthesis.speak(speech);
-    lastReadText = text;
-  }
+    function readText(text = display.innerText) {
+      if (!text.trim()) return;
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.voice = selectedVoice || speechSynthesis.getVoices()[0];
+      speech.pitch = 1;
+      speech.rate = 0.95;
+      speechSynthesis.speak(speech);
+      lastReadText = text;
+    }
 
-  function stopSpeech() {
-    speechSynthesis.cancel();
-  }
+    function stopSpeech() {
+      speechSynthesis.cancel();
+    }
 
-  function readSelected() {
-    const book = document.getElementById("bookSelect").value;
-    const chapter = document.getElementById("chapterInput").value;
-    const startVerse = parseInt(document.getElementById("startVerseInput").value);
-    const endVerse = parseInt(document.getElementById("endVerseInput").value);
-    if (!book || !chapter) return alert("Please select book and chapter");
+    function readSelected() {
+      const book = document.getElementById("bookSelect").value;
+      const chapter = document.getElementById("chapterInput").value;
+      const startVerse = parseInt(document.getElementById("startVerseInput").value);
+      const endVerse = parseInt(document.getElementById("endVerseInput").value);
+      if (!book || !chapter) return alert("Please select book and chapter");
 
-    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        let html = "";
-        let spoken = [];
-        if (!isNaN(startVerse) && !isNaN(endVerse)) {
-          for (let i = startVerse; i <= endVerse; i++) {
-            if (data.verses[i]) {
-              html += `<span class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
-              spoken.push(data.verses[i]);
+      const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          let html = "";
+          let spoken = [];
+          if (!isNaN(startVerse) && !isNaN(endVerse)) {
+            for (let i = startVerse; i <= endVerse; i++) {
+              if (data.verses[i]) {
+                html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+                spoken.push({ id: `verse-${i}`, text: data.verses[i] });
+              }
             }
+          } else if (!isNaN(startVerse)) {
+            const txt = data.verses[startVerse];
+            html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${startVerse}, "${txt.replace(/"/g, '\\"')}")'>🔖</button></span>`;
+            spoken.push({ id: `verse-${startVerse}`, text: txt });
+          } else {
+            const keys = Object.keys(data.verses).slice(0, 3);
+            keys.forEach(k => {
+              html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${k}, "${data.verses[k].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+              spoken.push({ id: `verse-${k}`, text: data.verses[k] });
+            });
           }
-        } else if (!isNaN(startVerse)) {
-          const txt = data.verses[startVerse];
-          html = `<span class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
-          spoken.push(txt);
-        } else {
-          const keys = Object.keys(data.verses).slice(0, 3);
-          keys.forEach(k => {
-            html += `<span class='verse-line'><b>${k}.</b> ${data.verses[k]}</span>`;
-            spoken.push(data.verses[k]);
-          });
+          display.innerHTML = html;
+          window.graceQueue = spoken;
+          lastReadText = spoken.map(v => v.text).join(" ");
+          readText(lastReadText);
+        });
+    }
+
+    function readHighlighted() {
+      if (!window.graceQueue || window.graceQueue.length === 0) return;
+      let index = 0;
+      function speakNext() {
+        if (index >= window.graceQueue.length) return;
+        const { id, text } = window.graceQueue[index];
+        document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add('active-verse');
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        display.innerHTML = html;
-        lastReadText = spoken.join(" ");
-        readText(lastReadText);
-      })
-      .catch(err => {
-        display.innerText = "⚠️ Error loading verses.";
-      });
-  }
-
-  function readHighlighted() {
-    if (!window.graceQueue || window.graceQueue.length === 0) return;
-    let index = 0;
-    function speakNext() {
-      if (index >= window.graceQueue.length) return;
-      const { id, text } = window.graceQueue[index];
-      document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
-      const el = document.getElementById(id);
-      if (el) {
-        el.classList.add('active-verse');
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
+        utter.pitch = 1;
+        utter.rate = 0.95;
+        utter.onend = () => { index++; speakNext(); };
+        speechSynthesis.speak(utter);
       }
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
-      utter.pitch = 1;
-      utter.rate = 0.95;
-      utter.onend = () => { index++; speakNext(); };
-      speechSynthesis.speak(utter);
+      speakNext();
     }
-    speakNext();
-  }
 
-  function startVoice() {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.start();
+    function startVoice() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
 
-    recognition.onresult = async function(event) {
-      const transcript = event.results[0][0].transcript;
-      feedback.textContent = `Heard: "${transcript}"`;
-      readText(transcript);
-    };
+      recognition.onresult = async function(event) {
+        const transcript = event.results[0][0].transcript;
+        feedback.textContent = `Heard: "${transcript}"`;
+        readText(transcript);
+      };
 
-    recognition.onerror = function(event) {
-      feedback.textContent = "Voice error: " + event.error;
-    };
-  }
-
-  function toggleTheme() {
-    document.body.classList.toggle("night-mode");
-    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
-  }
-
-  window.onload = () => {
-    if (localStorage.getItem("graceTheme") === "dark") {
-      document.body.classList.add("night-mode");
-      document.getElementById("themeToggle").checked = true;
+      recognition.onerror = function(event) {
+        feedback.textContent = "Voice error: " + event.error;
+      };
     }
-    speechSynthesis.onvoiceschanged = () => {
-      selectedVoice = speechSynthesis.getVoices()[0];
+
+    function toggleTheme() {
+      document.body.classList.toggle("night-mode");
+      localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
+    }
+
+    function addBookmark(book, chapter, verse, text) {
+      const note = prompt(`Add a note for ${book} ${chapter}:${verse}`) || "";
+      const entry = {
+        book,
+        chapter,
+        verse,
+        text,
+        note,
+        timestamp: new Date().toISOString()
+      };
+      const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+      bookmarks.push(entry);
+      localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
+      alert("📌 Bookmark saved!");
+    }
+
+    function showBookmarks() {
+      const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+      if (bookmarks.length === 0) return alert("You have no bookmarks yet.");
+      let out = "=== My Bookmarks ===\n";
+      bookmarks.forEach(b => {
+        out += `\n📖 ${b.book} ${b.chapter}:${b.verse}\n${b.text}\n📝 Note: ${b.note || "(none)"}\n`;
+      });
+      alert(out);
+    }
+
+    function populateVoices() {
+      const voices = speechSynthesis.getVoices();
+      const savedIndex = localStorage.getItem("graceVoiceIndex");
+      if (savedIndex && voices[savedIndex]) {
+        selectedVoice = voices[savedIndex];
+      } else {
+        selectedVoice = voices[0];
+      }
+    }
+    speechSynthesis.onvoiceschanged = populateVoices;
+
+    window.onload = () => {
+      if (localStorage.getItem("graceTheme") === "dark") {
+        document.body.classList.add("night-mode");
+        document.getElementById("themeToggle").checked = true;
+      }
+      populateVoices();
     };
-  };
-</script>
+  </script>
 </body>
 </html>
+
 
