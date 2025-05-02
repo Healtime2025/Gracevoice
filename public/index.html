@@ -137,6 +137,101 @@
   </div>
 
   <script>
+    let lastReadText = "";
+    let selectedVoice = null;
+    window.graceQueue = [];
+
+    function populateVoices() {
+      const voices = speechSynthesis.getVoices();
+      const savedIndex = localStorage.getItem("graceVoiceIndex");
+      if (savedIndex && voices[savedIndex]) {
+        selectedVoice = voices[savedIndex];
+      } else {
+        selectedVoice = voices[0];
+      }
+    }
+    speechSynthesis.onvoiceschanged = populateVoices;
+
+    function readText(text = document.getElementById("verseDisplay").innerText) {
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.voice = selectedVoice || speechSynthesis.getVoices()[0];
+      speech.pitch = 1;
+      speech.rate = 0.95;
+      speechSynthesis.speak(speech);
+      lastReadText = text;
+    }
+
+    function stopSpeech() {
+      speechSynthesis.cancel();
+    }
+
+    function readHighlighted() {
+      if (!window.graceQueue || window.graceQueue.length === 0) return;
+      let index = 0;
+      function speakNext() {
+        if (index >= window.graceQueue.length) return;
+        const { id, text } = window.graceQueue[index];
+        document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add('active-verse');
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
+        utter.pitch = 1;
+        utter.rate = 0.95;
+        utter.onend = () => { index++; speakNext(); };
+        speechSynthesis.speak(utter);
+      }
+      speakNext();
+    }
+
+    function startVoice() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
+
+      recognition.onresult = async function(event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById("voiceFeedback").textContent = `Heard: "${transcript}"`;
+        const lower = transcript.toLowerCase();
+        if (lower.includes("repeat")) return readText(lastReadText);
+        if (lower.includes("stop")) return stopSpeech();
+        const match = lower.match(/read\s+(\w+)\s+(\d+)(?:\s+verse\s+(\d+)(?:\s+to\s+(\d+))?)?/);
+        if (match) {
+          const [_, book, chapter, startVerse, endVerse] = match;
+          const verses = startVerse && endVerse ?
+            Array.from({ length: endVerse - startVerse + 1 }, (_, i) => (parseInt(startVerse) + i).toString()) :
+            startVerse ? [startVerse] : ["1", "2", "3"];
+          const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const verseTexts = verses.map(v => data.verses[v]).filter(Boolean);
+            document.getElementById("verseDisplay").innerText = verseTexts.join(" ") || "Verse not found.";
+            lastReadText = verseTexts.join(" ");
+            readText(lastReadText);
+          } catch {
+            document.getElementById("verseDisplay").innerText = "⚠️ Error retrieving verses.";
+          }
+        } else {
+          document.getElementById("verseDisplay").innerText = "Sorry, I didn't understand.";
+          readText("Sorry, I didn't understand that.");
+        }
+      };
+      recognition.onerror = function(event) {
+        document.getElementById("voiceFeedback").textContent = "Voice error: " + event.error;
+      };
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("night-mode");
+      localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
+    }
+
     function addBookmark(book, chapter, verse, text) {
       const note = prompt(`Add a note for ${book} ${chapter}:${verse}`) || "";
       const entry = {
@@ -153,13 +248,30 @@
       alert("📌 Bookmark saved!");
     }
 
+    function showBookmarks() {
+      const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+      if (bookmarks.length === 0) return alert("You have no bookmarks yet.");
+      let out = "=== My Bookmarks ===\n";
+      bookmarks.forEach(b => {
+        out += `\n📖 ${b.book} ${b.chapter}:${b.verse}\n${b.text}\n📝 Note: ${b.note || "(none)"}\n`;
+      });
+      alert(out);
+    }
+
+    window.onload = () => {
+      if (localStorage.getItem("graceTheme") === "dark") {
+        document.body.classList.add("night-mode");
+        document.getElementById("themeToggle").checked = true;
+      }
+      populateVoices();
+    };
+
     function readSelected() {
       const book = document.getElementById("bookSelect").value;
       const chapter = document.getElementById("chapterInput").value;
       const startVerse = parseInt(document.getElementById("startVerseInput").value);
       const endVerse = parseInt(document.getElementById("endVerseInput").value);
       if (!book || !chapter) return alert("Please select book and chapter");
-
       const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
       fetch(url)
         .then(res => res.json())
