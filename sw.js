@@ -1,29 +1,29 @@
-// GraceVoice Service Worker
+// 📖 GraceVoice Service Worker
 
 const CACHE_NAME = "gracevoice-cache-v1";
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  "/public/icon-192.png",
+  "/public/icon-512.png"
 ];
 
-// Install: Pre-cache static resources
+// ✅ Install: Pre-cache static assets
 self.addEventListener("install", (event) => {
-  console.log("[GraceVoice SW] Installed");
+  console.log("[GraceVoice SW] Installing...");
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log("[GraceVoice SW] Caching app shell");
+      console.log("[GraceVoice SW] Caching shell files...");
       return cache.addAll(FILES_TO_CACHE);
     })
   );
   self.skipWaiting();
 });
 
-// Activate: Cleanup old caches
+// 🔁 Activate: Clear outdated caches
 self.addEventListener("activate", (event) => {
-  console.log("[GraceVoice SW] Activated");
+  console.log("[GraceVoice SW] Activating...");
   event.waitUntil(
     caches.keys().then((keyList) =>
       Promise.all(
@@ -39,11 +39,14 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: Serve cached content when offline
+// 🌐 Fetch: Serve cached resources when offline
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    caches.match(event.request).then((cachedResponse) => {
+      return cachedResponse || fetch(event.request);
+    }).catch(() => {
+      return new Response("⚠️ You're offline, and the resource isn't cached.");
     })
   );
 });
+
