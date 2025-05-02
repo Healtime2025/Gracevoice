@@ -142,6 +142,35 @@
           display.innerHTML = html;
           window.graceQueue = spoken;
           lastReadText = spoken.map(v => `${v.text}`).join(" ");
+          readText(lastReadText);
+        });
+    }&chapter=${chapter}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          let html = "";
+          let spoken = [];
+          if (!isNaN(startVerse) && !isNaN(endVerse)) {
+            for (let i = startVerse; i <= endVerse; i++) {
+              if (data.verses[i]) {
+                html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
+                spoken.push({ id: `verse-${i}`, text: data.verses[i] });
+              }
+            }
+          } else if (!isNaN(startVerse)) {
+            const txt = data.verses[startVerse];
+            html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
+            spoken.push({ id: `verse-${startVerse}`, text: txt });
+          } else {
+            const keys = Object.keys(data.verses).slice(0, 3);
+            keys.forEach(k => {
+              html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]}</span>`;
+              spoken.push({ id: `verse-${k}`, text: data.verses[k] });
+            });
+          }
+          display.innerHTML = html;
+          window.graceQueue = spoken;
+          lastReadText = spoken.map(v => `${v.text}`).join(" ");
         });
     }
 
