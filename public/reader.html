@@ -63,13 +63,10 @@
     const bookRef = document.getElementById("bookRef");
     let fullText = "";
 
-    // 🔍 Extract query parameters from URL
     function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
+      return new URLSearchParams(window.location.search).get(param);
     }
 
-    // 🎧 Read aloud
     function playVerses(text = fullText) {
       if (!text) return;
       const utterance = new SpeechSynthesisUtterance(text);
@@ -87,17 +84,18 @@
       window.speechSynthesis.cancel();
     }
 
-    // 🚀 Load scripture
     async function loadScripture() {
       const book = getQueryParam("book");
       const chapter = getQueryParam("chapter");
+      const translation = getQueryParam("translation") || "web";
+
       if (!book || !chapter) {
         verseBox.textContent = "❌ Missing book or chapter in the URL.";
         return;
       }
 
       try {
-        const response = await fetch(`/api/fetch-script.js?book=${book}&chapter=${chapter}`);
+        const response = await fetch(`/api/fetch-script.js?book=${book}&chapter=${chapter}&translation=${translation}`);
         const data = await response.json();
 
         if (!data.verses || Object.keys(data.verses).length === 0) {
@@ -105,7 +103,8 @@
           return;
         }
 
-        bookRef.textContent = `${data.book} Chapter ${data.chapter}`;
+        bookRef.textContent = `${data.book} Chapter ${data.chapter} (${translation.toUpperCase()})`;
+
         fullText = Object.entries(data.verses)
           .map(([v, t]) => `${v}. ${t}`)
           .join(" ");
@@ -121,7 +120,6 @@
       }
     }
 
-    // 🚦 Init on load
     window.onload = loadScripture;
   </script>
 </body>
