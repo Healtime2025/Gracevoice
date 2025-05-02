@@ -87,7 +87,7 @@
 </head>
 <body>
   <h1>📖 GraceVoice</h1>
-  <p>Say: "Read Genesis 1 verse 1", or select manually below:</p>
+  
 
   
     <div>
@@ -103,6 +103,7 @@
 
   <div>
     <button onclick="readText()">▶️ Start Reading (Full)</button>
+    <button onclick="stopSpeech()">⏹️ Stop/Pause</button>
     <button onclick="readHighlighted()">🔍 Read with Highlight</button>
     <button onclick="startVoice()">🎙️ Voice Command</button>
   </div>
@@ -300,12 +301,25 @@
       document.getElementById("themeToggle").checked = true;
     }
   };
+  function stopSpeech() {
+    speechSynthesis.cancel();
+  }
 </script>
   <div>
     <button onclick="toggleSettings()">⚙️ Settings</button>
   </div>
   <div id="settingsPanel" style="display: none; margin-top: 20px; padding: 20px; background: #fff; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
     <h3>Settings</h3>
+    <div>
+      <label for="voiceSelect"><b>Voice:</b></label>
+      <select id="voiceSelect"></select>
+    </div>
+    <div>
+      <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
+    </div>
+    $1
+      <div style="margin-top:10px;"><a href="#" onclick="alert('Coming soon: full voice command help.')">More Help</a></div>
+    </div>
     <div>
       <label for="voiceSelect"><b>Voice:</b></label>
       <select id="voiceSelect"></select>
