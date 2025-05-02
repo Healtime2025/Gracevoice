@@ -1,21 +1,21 @@
 {
   "name": "GraceVoice",
   "short_name": "GraceVoice",
-  "start_url": "/gracevoice.html",
+  "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "GraceVoice is a voice-enabled Bible reading assistant designed for hands-free scripture listening and interaction.",
+  "description": "GraceVoice is a voice-activated scripture reader designed for hands-free Bible reading and command-based navigation.",
   "background_color": "#ffffff",
   "theme_color": "#3b5998",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
