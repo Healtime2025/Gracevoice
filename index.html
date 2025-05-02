@@ -79,6 +79,7 @@
   <div id="voiceFeedback"></div>
 
   <script src="script/parser.js"></script>
+
   <script>
     const display = document.getElementById("verseDisplay");
     const feedback = document.getElementById("voiceFeedback");
@@ -98,7 +99,7 @@
       const verse = document.getElementById("verseInput").value;
       if (!book || !chapter) return alert("Please select book and chapter");
 
-      const url = `/api/script-proxy?book=${book}&chapter=${chapter}`;
+      const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -106,8 +107,8 @@
           display.innerText = output || "Verse not found.";
           readText(output || "Verse not found.");
         })
-        .catch(err => {
-          display.innerText = "Error loading scripture.";
+        .catch(() => {
+          display.innerText = "⚠️ Error fetching scripture.";
         });
     }
 
@@ -124,7 +125,7 @@
 
         const parsed = parseVoiceCommand(transcript);
         if (parsed.action === "read") {
-          const url = `/api/script-proxy?book=${parsed.book}&chapter=${parsed.chapter}`;
+          const url = `/api/fetch-script.js?book=${parsed.book}&chapter=${parsed.chapter}`;
           try {
             const response = await fetch(url);
             const data = await response.json();
@@ -132,7 +133,7 @@
             display.innerText = verses || "Verse not found.";
             readText(verses || "Verse not found.");
           } catch {
-            display.innerText = "Error fetching scripture.";
+            display.innerText = "⚠️ Error retrieving verses.";
           }
         } else if (parsed.action === "repeat") {
           readText(lastReadText);
