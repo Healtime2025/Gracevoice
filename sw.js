@@ -5,8 +5,8 @@ const FILES_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/public/icon-192.png",
-  "/public/icon-512.png"
+  "/icon-192.png",
+  "/icon-512.png"
 ];
 
 // ✅ Install: Pre-cache static assets
@@ -49,4 +49,3 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
-
