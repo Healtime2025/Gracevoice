@@ -3,6 +3,14 @@
     {
       "source": "/read",
       "destination": "/public/reader.html"
+    },
+    {
+      "source": "/voice",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
