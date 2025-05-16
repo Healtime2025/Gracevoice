@@ -9,8 +9,44 @@
       "destination": "/index.html"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/faith-hub",
+      "destination": "/faith-hub.html"
+    },
+    {
+      "source": "/notes",
+      "destination": "/notes.html"
+    },
+    {
+      "source": "/prayer-wall",
+      "destination": "/prayer-wall.html"
+    },
+    {
+      "source": "/receive-christ",
+      "destination": "/receive-christ.html"
+    },
+    {
+      "source": "/testimonies",
+      "destination": "/testimonies.html"
+    },
+    {
+      "source": "/log",
+      "destination": "/log.html"
+    },
+    {
+      "source": "/bookmark",
+      "destination": "/bookmark.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/about.html"
+    },
+    {
+      "source": "/settings",
+      "destination": "/settings.html"
+    },
+    {
+      "source": "/donate",
+      "destination": "/donate.html"
     }
   ]
 }
