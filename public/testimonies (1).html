@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🙏 Testimonies | GraceVoice</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      padding: 30px;
+      text-align: center;
+      transition: background 0.3s, color 0.3s;
+    }
+    h1 { font-size: 28px; color: #2c3e50; margin-bottom: 20px; }
+    .testimony {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 15px auto;
+      max-width: 700px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: left;
+      transition: transform 0.3s;
+    }
+    .testimony:hover { transform: scale(1.02); }
+    .testimony strong { color: #1976d2; }
+    .testimony small { color: #777; }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+      border: none;
+      background: #1976d2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover { background: #145a9e; }
+    .night-mode { background-color: #1c1c1c; color: #e0e0e0; }
+    .night-mode .testimony { background-color: #2b2b2b; color: #e0e0e0; }
+  </style>
+</head>
+<body>
+  <h1>🙏 Shared Testimonies & Answered Prayers</h1>
+
+  <h2>🌟 Answered Prayers</h2>
+  <div id="answeredPrayers">Loading answered prayers...</div>
+
+  <h2 style="margin-top:40px">📝 Share Your Testimony</h2>
+  <div style="max-width:700px;margin:auto">
+    <input type="text" id="nameInput" placeholder="Your name (optional)">
+    <textarea id="testimonyInput" rows="5" placeholder="Write your testimony..."></textarea>
+    <button onclick="submitTestimony()">📤 Submit Testimony</button>
+  </div>
+
+  <div id="testimonyList">Loading testimonies...</div>
+
+  <script>
+    function loadTestimonies() {
+      const list = document.getElementById("testimonyList");
+      const items = JSON.parse(localStorage.getItem("graceTestimonies") || "[]");
+
+      if (!items.length) {
+        list.innerHTML = '<p>No testimonies shared yet.</p>';
+        return;
+      }
+
+      list.innerHTML = "";
+      items.reverse().forEach(entry => {
+        const div = document.createElement("div");
+        div.className = "testimony";
+        div.innerHTML = `
+          <p><strong>${entry.name || "Anonymous"}</strong></p>
+          <p>${entry.text}</p>
+          <small>🕒 ${new Date(entry.timestamp).toLocaleString()}</small>
+          <button onclick="celebrate('${entry.text}')">🙌 Hallelujah!</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function loadAnsweredPrayers() {
+      const list = document.getElementById("answeredPrayers");
+      const prayers = JSON.parse(localStorage.getItem("graceAnsweredPrayers") || "[]");
+
+      if (!prayers.length) {
+        list.innerHTML = '<p>No answered prayers yet.</p>';
+        return;
+      }
+
+      list.innerHTML = "";
+      prayers.forEach(prayer => {
+        const div = document.createElement("div");
+        div.className = "testimony";
+        div.innerHTML = `<p><strong>🙏 ${prayer}</strong></p>
+        <button onclick="celebrate('${prayer}')">🙌 Hallelujah!</button>`;
+        list.appendChild(div);
+      });
+    }
+
+    function celebrate(message) {
+      alert(`🙌 Hallelujah! Celebrating this testimony: \n\n"${message}"`);
+    }
+
+    function submitTestimony() {
+      const name = document.getElementById("nameInput").value.trim();
+      const text = document.getElementById("testimonyInput").value.trim();
+      if (!text) return alert("Please write your testimony.");
+
+      const entry = { name, text, timestamp: new Date().toISOString() };
+      const data = JSON.parse(localStorage.getItem("graceTestimonies") || "[]");
+      data.unshift(entry);
+      localStorage.setItem("graceTestimonies", JSON.stringify(data.slice(0, 100)));
+
+      document.getElementById("nameInput").value = "";
+      document.getElementById("testimonyInput").value = "";
+      loadTestimonies();
+    }
+
+    window.onload = () => {
+      loadTestimonies();
+      loadAnsweredPrayers();
+    };
+  </script>
+</body>
+</html>

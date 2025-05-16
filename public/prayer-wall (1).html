@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🙏 Global Prayer Wall | GraceVoice</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 30px;
+      transition: background 0.3s, color 0.3s;
+    }
+    h1 {
+      font-size: 28px;
+      color: #2c3e50;
+    }
+    .prayer-container {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background: #ffffff;
+    }
+    .prayer-card {
+      background: white;
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin: 10px 0;
+      font-size: 16px;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .prayer-card p {
+      margin: 0;
+      flex: 1;
+    }
+    .prayer-card .timestamp {
+      font-size: 12px;
+      color: #777;
+      margin-left: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px 5px;
+      border: none;
+      background: #1976d2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #145a9e;
+    }
+  </style>
+</head>
+<body>
+  <button style="position: absolute; top: 15px; left: 15px;" onclick="window.location.href='index.html'">🏠 Home</button>
+
+  <h1>🙏 Global Prayer Wall</h1>
+
+  <form onsubmit="submitPrayer(event)">
+    <textarea id="prayerInput" rows="3" placeholder="Write your prayer request..."></textarea><br>
+    <button type="submit">📤 Submit Prayer</button>
+  </form>
+
+  <div class="prayer-container" id="prayerList">Loading prayer requests...</div>
+
+  <script>
+    function submitPrayer(event) {
+      event.preventDefault();
+      const input = document.getElementById('prayerInput');
+      const text = input.value.trim();
+      if (!text) return alert("❗ Please enter a prayer request.");
+
+      const prayers = JSON.parse(localStorage.getItem("gracePrayers") || "[]");
+      prayers.push({ text, timestamp: new Date().toISOString(), attending: 0 });
+      localStorage.setItem("gracePrayers", JSON.stringify(prayers.slice(0, 100)));
+
+      input.value = "";
+      renderPrayers();
+      alert("🙏 Prayer submitted.");
+    }
+
+    function renderPrayers() {
+      const container = document.getElementById('prayerList');
+      const prayers = JSON.parse(localStorage.getItem("gracePrayers") || "[]");
+      container.innerHTML = "";
+
+      prayers.forEach((p, i) => {
+        const div = document.createElement("div");
+        div.className = "prayer-card";
+        div.innerHTML = `
+          <p><strong>${i + 1}. </strong>${p.text}</p>
+          <div class="timestamp">🕒 ${new Date(p.timestamp).toLocaleString()}</div>
+        `;
+        container.appendChild(div);
+      });
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    window.onload = () => {
+      renderPrayers();
+    };
+  </script>
+</body>
+</html>
