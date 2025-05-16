@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faith Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f5deb3, #d4af37);
+      color: #333;
+      text-align: center;
+      padding: 40px;
+      margin: 0;
+    }
+    h1 {
+      font-size: 36px;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    .hub-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    .hub-item {
+      background: #fff;
+      padding: 20px;
+      width: 160px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      transition: transform 0.3s;
+    }
+    .hub-item:hover {
+      transform: scale(1.05);
+    }
+    .hub-item i {
+      font-size: 36px;
+      margin-bottom: 10px;
+      color: #d4af37;
+    }
+    .hub-item p {
+      font-size: 18px;
+      margin: 0;
+      color: #2c3e50;
+    }
+    .return-button {
+      margin-top: 30px;
+      display: inline-block;
+      background-color: #2c3e50;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    .return-button:hover {
+      background-color: #1a252f;
+    }
+  </style>
+</head>
+<body>
+  <h1>📖 Faith Hub</h1>
+  <div class="hub-container">
+    <div class="hub-item"><i class="fas fa-sticky-note"></i><p>Notes</p></div>
+    <div class="hub-item"><i class="fas fa-praying-hands"></i><p>Prayer Wall</p></div>
+    <div class="hub-item"><i class="fas fa-book"></i><p>Testimonies</p></div>
+    <div class="hub-item"><i class="fas fa-cross"></i><p>Receive Christ</p></div>
+    <div class="hub-item"><i class="fas fa-bookmark"></i><p>Bookmarks</p></div>
+    <div class="hub-item"><i class="fas fa-clipboard-list"></i><p>Log</p></div>
+    <div class="hub-item"><i class="fas fa-info-circle"></i><p>About</p></div>
+  </div>
+
+  <a href="bible-reader.html" class="return-button">⬅️ Return to Bible Reading</a>
+
+</body>
+</html>
