@@ -13,6 +13,13 @@
       text-align: center;
       padding: 40px;
       margin: 0;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      opacity: 1;
+      transform: scale(1);
+    }
+    body.hidden {
+      opacity: 0;
+      transform: scale(0.95);
     }
     h1 {
       font-size: 36px;
@@ -34,9 +41,12 @@
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.15);
       transition: transform 0.3s;
+      text-decoration: none;
+      color: #2c3e50;
     }
     .hub-item:hover {
       transform: scale(1.05);
+      background-color: #f4f4f4;
     }
     .hub-item i {
       font-size: 36px;
@@ -67,19 +77,39 @@
 <body>
   <h1>📖 Faith Hub</h1>
   <div class="hub-container">
-    <div class="hub-item"><i class="fas fa-sticky-note"></i><p>Notes</p></div>
-    <div class="hub-item"><i class="fas fa-praying-hands"></i><p>Prayer Wall</p></div>
-    <div class="hub-item"><i class="fas fa-book"></i><p>Testimonies</p></div>
-    <div class="hub-item"><i class="fas fa-cross"></i><p>Receive Christ</p></div>
-    <div class="hub-item"><i class="fas fa-bookmark"></i><p>Bookmarks</p></div>
-    <div class="hub-item"><i class="fas fa-clipboard-list"></i><p>Log</p></div>
-    <div class="hub-item"><i class="fas fa-info-circle"></i><p>About</p></div>
-    <div class="hub-item"><i class="fas fa-gears"></i><p>Settings</p></div>
-    <div class="hub-item"><i class="fas fa-heart"></i><p>Donate</p></div>
-     
+    <a href="/notes.html" class="hub-item link"><i class="fas fa-sticky-note"></i><p>Notes</p></a>
+    <a href="/prayer-wall.html" class="hub-item link"><i class="fas fa-praying-hands"></i><p>Prayer Wall</p></a>
+    <a href="/testimonies.html" class="hub-item link"><i class="fas fa-book"></i><p>Testimonies</p></a>
+    <a href="/receive-christ.html" class="hub-item link"><i class="fas fa-cross"></i><p>Receive Christ</p></a>
+    <a href="/bookmark.html" class="hub-item link"><i class="fas fa-bookmark"></i><p>Bookmarks</p></a>
+    <a href="/log.html" class="hub-item link"><i class="fas fa-clipboard-list"></i><p>Log</p></a>
+    <a href="/about.html" class="hub-item link"><i class="fas fa-info-circle"></i><p>About</p></a>
+    <a href="/settings.html" class="hub-item link"><i class="fas fa-gears"></i><p>Settings</p></a>
+    <a href="/donate.html" class="hub-item link"><i class="fas fa-heart"></i><p>Donate</p></a>
   </div>
 
-  <a href="bible-reader.html" class="return-button">⬅️ Return to Bible Reading</a>
+  <a href="/index.html" class="return-button link">⬅️ Return to Bible Reading</a>
 
+  <script>
+    // Smooth Transition Effect
+    document.addEventListener("DOMContentLoaded", function() {
+      document.body.classList.remove("hidden");
+
+      document.querySelectorAll(".link").forEach(link => {
+        link.addEventListener("click", function(event) {
+          event.preventDefault();
+          document.body.classList.add("hidden");
+          setTimeout(() => {
+            window.location.href = link.href;
+          }, 500); // 0.5 second delay for smooth transition
+        });
+      });
+    });
+
+    // Prevent Flash on Page Load
+    window.addEventListener("beforeunload", function() {
+      document.body.classList.add("hidden");
+    });
+  </script>
 </body>
 </html>
