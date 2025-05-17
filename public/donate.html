@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌟 Support GraceVoice | Donate</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 40px;
+      color: #2c3e50;
+    }
+    h1 {
+      font-size: 32px;
+      color: #2c3e50;
+    }
+    .donate-box {
+      background: #fff;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      margin: 10px;
+      border: none;
+      background: #1976d2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #145a9e;
+    }
+    .nav-bar {
+      margin-top: 20px;
+    }
+    .nav-bar button {
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🌟 Support GraceVoice</h1>
+<p>Your generous support helps keep GraceVoice running and reaching more people. Every contribution makes a difference.</p>
+
+<div class="donate-box">
+  <h2>Make a Donation</h2>
+
+  <p>enter a custom amount:</p>
+  <input type="number" id="customAmount" placeholder="Enter amount">
+  <button onclick="makeCustomDonation()">💰 Donate Custom Amount</button>
+</div>
+
+<div class="nav-bar">
+  <button onclick="window.location.href='index.html'">🏠 Home</button>
+  <button onclick="window.location.href='faith-hub.html'">🌐 Faith Hub</button>
+</div>
+
+<script>
+  function makeDonation(amount) {
+    alert(`Thank you for your support! Your $${amount} donation is being processed.`);
+    // Add your donation processing logic here
+  }
+
+  function makeCustomDonation() {
+    const amount = document.getElementById('customAmount').value;
+    if (amount && amount > 0) {
+      alert(`Thank you for your support! Your $${amount} donation is being processed.`);
+      // Add your donation processing logic here
+    } else {
+      alert("Please enter a valid donation amount.");
+    }
+  }
+</script>
+
+</body>
+</html>
