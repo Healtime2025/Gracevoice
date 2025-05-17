@@ -138,7 +138,7 @@
     });
   </script>
 </body>
- <script>
+<script>
   // Define selectedVoice globally
   let selectedVoice = null;
 
@@ -169,41 +169,15 @@
   // Speak Audio Guide
   function speakGuide() {
     const guideText = "Welcome to Faith Hub. Choose an option to explore. For settings, tap the gear icon.";
-    const voices = speechSynthesis.getVoices();
     const speech = new SpeechSynthesisUtterance(guideText);
-    speech.voice = selectedVoice || voices[0]; // Use selectedVoice if available
+    speech.voice = selectedVoice || speechSynthesis.getVoices()[0]; // Use selectedVoice if available
     speech.pitch = 1;
     speech.rate = 1;
     speechSynthesis.cancel();
     speechSynthesis.speak(speech);
   }
-<script>
-  // Load user preferences (Theme and Voice)
-  function applyUserPreferences() {
-    // Apply Theme
-    if (localStorage.getItem("graceTheme") === "dark") {
-      document.body.classList.add("night-mode");
-    }
-
-    // Load Voice Preference
-    const savedVoice = localStorage.getItem("selectedVoice");
-    if (savedVoice) {
-      const voices = speechSynthesis.getVoices();
-      selectedVoice = voices.find(voice => voice.name === savedVoice);
-    }
-  }
-
-  // Initialize voice selection on page load
-  speechSynthesis.onvoiceschanged = applyUserPreferences;
-  window.onload = () => {
-    applyUserPreferences();
-    if (localStorage.getItem("faithHubAudioGuide") === "true") {
-      speakGuide();
-    }
-  };
 </script>
-
-</script>
-
-
 </html>
+
+
+
