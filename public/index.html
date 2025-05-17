@@ -331,4 +331,25 @@
   };
 </script>
 </body>
+  <script>
+  // Load user preferences (Theme and Voice)
+  function applyUserPreferences() {
+    // Apply Theme
+    if (localStorage.getItem("graceTheme") === "dark") {
+      document.body.classList.add("night-mode");
+    }
+
+    // Load Voice
+    const savedVoice = localStorage.getItem("selectedVoice");
+    if (savedVoice) {
+      const voices = speechSynthesis.getVoices();
+      selectedVoice = voices.find(voice => voice.name === savedVoice);
+    }
+  }
+
+  // Initialize voice selection on page load
+  speechSynthesis.onvoiceschanged = applyUserPreferences;
+  window.onload = applyUserPreferences;
+</script>
+
 </html>
