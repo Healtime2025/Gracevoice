@@ -2,41 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Receive Christ Now | GraceVoice</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌟 Receive Christ Now | GraceVoice</title>
+  <link rel="manifest" href="manifest.json">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f4f4f4;
-      color: #2c3e50;
       text-align: center;
       padding: 40px;
-      font-size: 20px;
-      line-height: 1.8;
     }
-    h1 { font-size: 32px; }
-    .section {
-      max-width: 700px;
-      margin: 30px auto;
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      text-align: left;
+    h1 {
+      font-size: 32px;
+      color: #2c3e50;
     }
-    button, input, textarea {
-      font-size: 18px;
-      padding: 12px;
-      margin: 10px 0;
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      margin: 10px;
       border: none;
-      border-radius: 6px;
-      width: 100%;
+      background: #1976d2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
     }
-    button { background: #1976d2; color: white; cursor: pointer; }
-    button:hover { background: #145a9e; }
-    a { color: #1976d2; font-weight: bold; cursor: pointer; }
-    .verse { font-style: italic; margin-top: 10px; }
-    #announcement { background: #e1f5fe; padding: 15px; border-radius: 8px; margin-top: 20px; display: none; }
+    button:hover {
+      background: #145a9e;
+    }
+    .confession {
+      margin-top: 20px;
+      font-size: 18px;
+      text-align: left;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    #announcement {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
   </style>
 </head>
 
@@ -46,30 +52,42 @@
     <button onclick="window.location.href='faith-hub.html'">🌐 Faith Hub</button>
   </div>
 
-  <h1>🌟 Receive Christ Now</h1>
+ <h1>🌟 Receive Christ Now</h1>
 
-  <p><strong>My name is Solomon Moriti from South Africa.</strong></p>
-  <p>I received CHRIST in 1994, it has been <span id="yearsInChrist"></span> years now and I have seen GOD's hand in my life ever since. If you're not sure whether you'll go to Heaven one day, you can make sure <strong>right now</strong>.</p>
-
+<div class="confession">
   <p><strong>You can pray this prayer if you wish God to change your life:</strong></p>
-  <p>Dear LORD, I know that I am a sinner and I ask for your forgiveness. I believe that you died for my sins and rose again. I repent before you and ask you to take my sins away. I invite you to come into my heart and my life. In the name of Jesus Christ I pray. Amen.</p>
-
-  <div id="announcement"></div>
-
-  <hr>
-  <h3>🎉 Recent Announcements</h3>
-  <div id="announcementList">No announcements yet.</div>
+  <p id="confessionText">
+Dear LORD, I know that I am a sinner and I ask for your forgiveness. 
+I believe that you died for my sins and rose again. I repent before 
+you and ask you to take my sins away. I invite you to come into my 
+heart and my life. In the name of Jesus Christ I pray. Amen.
+  </p>
+  <button onclick="readConfession()">📖 Read Aloud</button>
 </div>
+
+<h3>✍️ Indicate Your Decision</h3>
+<input type="text" id="fullName" placeholder="Your Name" style="padding: 10px; width: 200px;">
+<button onclick="handleSubmission()">✅ I Have Received Christ</button>
+
+<div id="announcement"></div>
+
+<hr>
+<h3>🎉 Recent Announcements</h3>
+<div id="announcementList">No announcements yet.</div>
 
 <script>
   const receivedYear = 1994;
   const currentYear = new Date().getFullYear();
   document.getElementById("yearsInChrist").textContent = currentYear - receivedYear;
 
-  function handleSubmission(e) {
-    e.preventDefault();
-    const name = document.getElementById("fullName").value;
-    document.getElementById("announcement").innerHTML = `🎉 <strong>${name}</strong> has received Christ! Everyone, let’s celebrate and pray for them!`;
+  function handleSubmission() {
+    const name = document.getElementById("fullName").value.trim();
+    if (!name) {
+      alert("Please enter your name.");
+      return;
+    }
+
+    document.getElementById("announcement").innerHTML = `🎉 <strong>${name}</strong> has received Christ! Let's celebrate and pray for them!`;
     document.getElementById("announcement").style.display = "block";
 
     const announcements = JSON.parse(localStorage.getItem("graceAnnouncements") || "[]");
@@ -82,12 +100,25 @@
   function renderAnnouncements() {
     const list = document.getElementById("announcementList");
     const announcements = JSON.parse(localStorage.getItem("graceAnnouncements") || "[]");
-    list.innerHTML = announcements.map(a => `<p>${a}</p>`).join("");
+    list.innerHTML = announcements.length > 0
+      ? announcements.map(a => `<p>${a}</p>`).join("")
+      : "No announcements yet.";
   }
 
-  window.onload = () => { renderAnnouncements(); };
+  function readConfession() {
+    const confessionText = document.getElementById("confessionText").innerText;
+    const speech = new SpeechSynthesisUtterance(confessionText);
+    speech.voice = speechSynthesis.getVoices().find(voice => voice.lang === "en-US") || null;
+    speech.rate = 0.95;
+    speech.pitch = 1;
+    speechSynthesis.cancel(); // Stop any ongoing speech
+    speechSynthesis.speak(speech);
+  }
+
+  window.onload = renderAnnouncements;
 </script>
-  <script>
+
+<script>
   // 📖 GraceVoice Service Worker Registration
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
