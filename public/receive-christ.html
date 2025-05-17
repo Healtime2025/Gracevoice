@@ -126,7 +126,7 @@ heart and my life. In the name of Jesus Christ I pray. Amen.
   // 📖 GraceVoice Service Worker Registration
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
+      navigator.serviceWorker.register('/public/service-worker.js')
         .then(registration => {
           console.log('[GraceVoice SW] Registered:', registration);
         })
@@ -136,6 +136,7 @@ heart and my life. In the name of Jesus Christ I pray. Amen.
     });
   }
 </script>
+
 
 </body>
 </html>
