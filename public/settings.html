@@ -124,4 +124,25 @@
     };
   </script>
 </body>
+<div style="margin-top: 20px;">
+  <label>
+    <input type="checkbox" id="audioGuideToggle" onchange="toggleAudioGuide()">
+    Enable Faith Hub Audio Guide
+  </label>
+</div>
+
+<script>
+  // Toggle Audio Guide
+  function toggleAudioGuide() {
+    const isChecked = document.getElementById("audioGuideToggle").checked;
+    localStorage.setItem("faithHubAudioGuide", isChecked ? "true" : "false");
+  }
+
+  // Load saved audio guide preference
+  window.onload = () => {
+    const guideEnabled = localStorage.getItem("faithHubAudioGuide") === "true";
+    document.getElementById("audioGuideToggle").checked = guideEnabled;
+  };
+</script>
+
 </html>
