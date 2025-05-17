@@ -85,29 +85,36 @@
       localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
     }
 
-    // Voice selector
+    // Populate available voices
     function populateVoices() {
       const voiceSelect = document.getElementById("voiceSelect");
       const voices = speechSynthesis.getVoices();
       voiceSelect.innerHTML = "";
-      voices.forEach((voice, i) => {
+
+      voices.forEach((voice) => {
         const option = document.createElement("option");
-        option.value = i;
+        option.value = voice.name;
         option.text = `${voice.name} (${voice.lang})`;
         voiceSelect.appendChild(option);
       });
-      const savedIndex = localStorage.getItem("graceVoiceIndex");
-      if (savedIndex && voices[savedIndex]) {
-        voiceSelect.value = savedIndex;
+
+      // Load saved voice
+      const savedVoice = localStorage.getItem("selectedVoice");
+      if (savedVoice) {
+        voiceSelect.value = savedVoice;
       }
+
+      // Save selected voice
       voiceSelect.onchange = () => {
-        localStorage.setItem("graceVoiceIndex", voiceSelect.value);
+        localStorage.setItem("selectedVoice", voiceSelect.value);
+        alert("✅ Voice setting saved!");
       };
     }
 
+    // Load voices when available
     speechSynthesis.onvoiceschanged = populateVoices;
 
-    // Apply saved theme
+    // Apply saved theme on page load
     window.onload = () => {
       if (localStorage.getItem("graceTheme") === "dark") {
         document.body.classList.add("night-mode");
