@@ -102,14 +102,46 @@
 </head>
 <body>
 
-  <h1>🔖 My Bookmarks</h1>
-  <div id="bookmarkList">Loading...</div>
+<h1>🔖 My Bookmarks</h1>
+<div id="bookmarkList">Loading...</div>
 
-  <div class="nav-bar">
-    <button onclick="window.location.href='index.html'">🏠 Home</button>
-    <button onclick="toggleTheme()">🌓 Theme</button>
-    <button onclick="window.location.href='settings.html'">⚙️ Settings</button>
-  </div>
+<div class="nav-bar">
+  <button onclick="window.location.href='index.html'">🏠 Home</button>
+  <button onclick="window.location.href='faith-hub.html'">🌐 Faith Hub</button>
+  <button onclick="toggleTheme()">🌓 Theme</button>
+  <button onclick="window.location.href='settings.html'">⚙️ Settings</button>
+</div>
+
+<style>
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1976d2;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .nav-bar button {
+    background: #ffffff;
+    color: #1976d2;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .nav-bar button:hover {
+    background: #145a9e;
+    color: #ffffff;
+  }
+</style>
+
 
   <script>
     function loadBookmarks() {
