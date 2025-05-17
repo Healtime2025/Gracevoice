@@ -112,27 +112,10 @@
     });
   </script>
 </body>
-  <script>
-  // Load user preferences (Theme and Voice)
-  function applyUserPreferences() {
-    // Apply Theme
-    if (localStorage.getItem("graceTheme") === "dark") {
-      document.body.classList.add("night-mode");
-    }
+ <script>
+  // Define selectedVoice globally
+  let selectedVoice = null;
 
-    // Load Voice (if you have voice functionality in Faith Hub)
-    const savedVoice = localStorage.getItem("selectedVoice");
-    if (savedVoice) {
-      const voices = speechSynthesis.getVoices();
-      selectedVoice = voices.find(voice => voice.name === savedVoice);
-    }
-  }
-
-  // Initialize voice selection on page load
-  speechSynthesis.onvoiceschanged = applyUserPreferences;
-  window.onload = applyUserPreferences;
-</script>
-<script>
   // Load user preferences (Theme and Voice)
   function applyUserPreferences() {
     // Apply Theme
@@ -162,12 +145,13 @@
     const guideText = "Welcome to Faith Hub. Choose an option to explore. For settings, tap the gear icon.";
     const voices = speechSynthesis.getVoices();
     const speech = new SpeechSynthesisUtterance(guideText);
-    speech.voice = selectedVoice || voices[0];
+    speech.voice = selectedVoice || voices[0]; // Use selectedVoice if available
     speech.pitch = 1;
     speech.rate = 1;
     speechSynthesis.cancel();
     speechSynthesis.speak(speech);
   }
 </script>
+
 
 </html>
