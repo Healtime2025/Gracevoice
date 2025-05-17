@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GraceVoice Bible Reader</title>
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      color: #2c3e50;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      padding: 0 20px;
+    }
+    h1 {
+      font-size: clamp(2rem, 8vw, 4rem);
+      text-transform: uppercase;
+      letter-spacing: clamp(2px, 0.5vw, 5px);
+      color: #2c3e50;
+      cursor: pointer;
+      transition: opacity 1s, transform 1s;
+      text-align: center;
+    }
+    h1:hover {
+      opacity: 0.7;
+    }
+    #loading {
+      display: none;
+      font-size: 1.2rem;
+      margin-top: 20px;
+      color: #2c3e50;
+      text-align: center;
+    }
+
+    @media (min-width: 1024px) {
+      body {
+        padding: 0 40px;
+      }
+    }
+  </style>
+  <script>
+    function fadeOut() {
+      const heading = document.querySelector('h1');
+      heading.style.opacity = '0';
+      heading.style.transform = 'scale(0.9)';
+      document.getElementById('loading').style.display = 'block';
+
+      setTimeout(() => {
+        fetch('/index.html')
+          .then(response => {
+            if (response.ok) {
+              window.location.href = '/index.html';
+            } else {
+              document.getElementById('loading').innerText = '⚠️ Error: Main page not found.';
+            }
+          })
+          .catch(() => {
+            document.getElementById('loading').innerText = '⚠️ Error: Unable to connect.';
+          });
+      }, 800);
+    }
+  </script>
+</head>
+<body>
+  <div>
+    <h1 onclick="fadeOut()">GRACEVOICE BIBLE READER</h1>
+    <div id="loading">Loading...</div>
+  </div>
+</body>
+</html>
