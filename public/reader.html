@@ -53,35 +53,61 @@
   <div id="bookRef"></div>
   <div class="verse-box" id="verseBox">Loading scripture...</div>
   <div>
-    <button onclick="playVerses()">▶️ Read</button>
-    <button onclick="repeatVerses()">🔁 Repeat</button>
-    <button onclick="stopReading()">⏹️ Stop</button>
+    <button onclick="startReading()">▶️ Start Reading</button>
+    <button onclick="loadScripture()">📖 Load The Scripture</button>
+    <button onclick="pauseReading()">⏸️ Pause</button>
   </div>
 
   <script>
     const verseBox = document.getElementById("verseBox");
     const bookRef = document.getElementById("bookRef");
     let fullText = "";
+    let speechInstance = null;
+    let lastPosition = 0;
 
     function getQueryParam(param) {
       return new URLSearchParams(window.location.search).get(param);
     }
 
-    function playVerses(text = fullText) {
-      if (!text) return;
-      const utterance = new SpeechSynthesisUtterance(text);
+    function startReading() {
+      if (!fullText) return;
+      
+      if (speechInstance && speechInstance.paused) {
+        speechInstance.resume();
+      } else {
+        playVerses(lastPosition);
+      }
+    }
+
+    function playVerses(startIndex = 0) {
+      const verses = fullText.split(". ");
+      if (startIndex >= verses.length) return;
+
+      const utterance = new SpeechSynthesisUtterance(verses.slice(startIndex).join(". "));
       utterance.rate = 0.95;
       utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
-    }
 
-    function repeatVerses() {
-      stopReading();
-      playVerses();
-    }
+      utterance.onend = () => {
+        lastPosition = 0; // Reset position when done
+      };
 
-    function stopReading() {
+      utterance.onboundary = (event) => {
+        lastPosition = startIndex + Math.floor(event.charIndex / verses[startIndex].length);
+      };
+
       window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+      speechInstance = utterance;
+    }
+
+    function pauseReading() {
+      if (speechInstance) {
+        if (speechInstance.paused) {
+          speechInstance.resume();
+        } else {
+          speechInstance.pause();
+        }
+      }
     }
 
     async function loadScripture() {
@@ -107,13 +133,12 @@
 
         fullText = Object.entries(data.verses)
           .map(([v, t]) => `${v}. ${t}`)
-          .join(" ");
+          .join(". ");
 
         verseBox.innerHTML = Object.entries(data.verses)
           .map(([v, t]) => `<p><strong>${v}</strong> ${t}</p>`)
           .join("");
 
-        playVerses(); // Auto-read on load
       } catch (error) {
         verseBox.textContent = "❌ Error loading scripture.";
         console.error(error);
