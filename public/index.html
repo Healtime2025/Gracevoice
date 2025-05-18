@@ -335,6 +335,44 @@
   };
 </script>
 </body>
+<script>
+  const display = document.getElementById("verseDisplay");
+  const feedback = document.getElementById("voiceFeedback");
+  let lastReadText = "";
+  window.graceQueue = [];
+  let selectedVoice = null;
+
+  function displayScripture() {
+    const book = document.getElementById("bookSelect").value;
+    const chapter = document.getElementById("chapterInput").value;
+    if (!book || !chapter) {
+      alert("Please select book and chapter");
+      return;
+    }
+
+    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        let html = "";
+        if (data.error) {
+          display.innerText = "⚠️ Error loading verses.";
+          return;
+        }
+
+        // Display full chapter
+        Object.keys(data.verses).forEach(key => {
+          html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+        });
+
+        display.innerHTML = html;
+      })
+      .catch(err => {
+        display.innerText = "⚠️ Error loading verses.";
+        console.error(err);
+      });
+  }
+
   <script>
   // Load user preferences (Theme and Voice)
   function applyUserPreferences() {
