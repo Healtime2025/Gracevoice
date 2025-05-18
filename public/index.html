@@ -105,7 +105,7 @@
 
   <div>
     <button onclick="readSelected()">📘 Start Reading</button>
-    <button onclick="stopSpeech()">⏹️ Stop/Pause</button>
+    <button id="pauseResumeBtn" onclick="togglePauseResume()">⏸️ Pause/Resume</button>
     <button onclick="readHighlighted()">🔍 Read with Highlight</button>
     <button onclick="startVoice()">🎙️ Voice Command</button>
    </div>
@@ -203,6 +203,9 @@
   let lastReadText = "";
   window.graceQueue = [];
   let selectedVoice = null;
+  let isPaused = false;
+  let currentIndex = 0;
+  let speechInstance = null;
 
   // Function to Display Scripture without Reading
   function displayScripture() {
@@ -259,40 +262,12 @@
       return alert("No verses loaded. Display Scripture first.");
     }
 
-    let index = 0;
-    function speakNext() {
-      if (index >= window.graceQueue.length) return;
-
-      const verseText = window.graceQueue[index];
-      const verseElement = document.getElementById(`verse-${index + 1}`);
-
-      // Highlight the current verse
-      document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
-      if (verseElement) {
-        verseElement.classList.add('active-verse');
-        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-
-      // Read the text
-      const utter = new SpeechSynthesisUtterance(verseText);
-      utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
-      utter.pitch = 1;
-      utter.rate = 0.95;
-
-      utter.onend = () => {
-        index++;
-        speakNext(); // Move to the next verse
-      };
-
-      speechSynthesis.cancel();
-      speechSynthesis.speak(utter);
-    }
-
+    currentIndex = 0;
     speakNext();
   }
 
   // Function to Read Text Aloud (Universal)
-  function readText(text = display.innerText) {
+  function readText(text) {
     const voices = speechSynthesis.getVoices();
     const speech = new SpeechSynthesisUtterance(text);
     speech.voice = selectedVoice || voices[0];
@@ -303,9 +278,55 @@
     lastReadText = text;
   }
 
+  // Pause or Resume Reading
+  function togglePauseResume() {
+    if (isPaused) {
+      speechSynthesis.resume();
+      isPaused = false;
+      document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+    } else {
+      speechSynthesis.pause();
+      isPaused = true;
+      document.getElementById("pauseResumeBtn").innerText = "▶️ Resume";
+    }
+  }
+
   // Stop Reading
   function stopSpeech() {
     speechSynthesis.cancel();
+    isPaused = false;
+    document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+  }
+
+  // Function to Read with Highlight and Speak
+  function speakNext() {
+    if (currentIndex >= window.graceQueue.length) return;
+
+    const verseText = window.graceQueue[currentIndex];
+    const verseElement = document.getElementById(`verse-${currentIndex + 1}`);
+
+    // Highlight the current verse
+    document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+    if (verseElement) {
+      verseElement.classList.add('active-verse');
+      verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Read the text
+    speechInstance = new SpeechSynthesisUtterance(verseText);
+    speechInstance.voice = selectedVoice || speechSynthesis.getVoices()[0];
+    speechInstance.pitch = 1;
+    speechInstance.rate = 0.95;
+
+    speechInstance.onend = () => {
+      if (!isPaused) {
+        currentIndex++;
+        speakNext();
+      }
+    };
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(speechInstance);
   }
 
   // Add Bookmark
@@ -343,6 +364,8 @@
         readSelected();
       } else if (transcript.toLowerCase().includes("display")) {
         displayScripture();
+      } else if (transcript.toLowerCase().includes("pause")) {
+        togglePauseResume();
       } else if (transcript.toLowerCase().includes("stop")) {
         stopSpeech();
       }
