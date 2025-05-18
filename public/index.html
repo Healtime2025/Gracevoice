@@ -358,9 +358,8 @@
           return;
         }
 
-        // Display full chapter
         Object.keys(data.verses).forEach(key => {
-          html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+          html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]}</span>`;
         });
 
         display.innerHTML = html;
@@ -370,6 +369,7 @@
         console.error(err);
       });
   }
+</script>
 
   // Load user preferences (Theme and Voice)
   function applyUserPreferences() {
