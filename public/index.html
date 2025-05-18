@@ -228,13 +228,13 @@
 
         if (!startVerse && !endVerse) {
           Object.keys(data.verses).forEach(key => {
-            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]}</span>`;
             window.graceQueue.push(data.verses[key]);
           });
         } else {
           for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
-              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
               window.graceQueue.push(data.verses[i]);
             }
           }
@@ -247,6 +247,19 @@
         display.innerText = "⚠️ Error loading verses.";
         console.error("Error fetching verses:", err);
       });
+  }
+
+  // Function to Read Text Aloud
+  function readText(text) {
+    if (!text) return;
+    const voices = speechSynthesis.getVoices();
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.voice = selectedVoice || voices[0];
+    speech.pitch = 1;
+    speech.rate = 0.95;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(speech);
+    lastReadText = text;
   }
 
   // Function to Read Selected Verses without Highlight
@@ -267,39 +280,7 @@
     speakNext();
   }
 
-  // Function to Read Text Aloud (Universal)
-  function readText(text) {
-    const voices = speechSynthesis.getVoices();
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.voice = selectedVoice || voices[0];
-    speech.pitch = 1;
-    speech.rate = 0.95;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(speech);
-    lastReadText = text;
-  }
-
-  // Pause or Resume Reading
-  function togglePauseResume() {
-    if (isPaused) {
-      speechSynthesis.resume();
-      isPaused = false;
-      document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
-    } else {
-      speechSynthesis.pause();
-      isPaused = true;
-      document.getElementById("pauseResumeBtn").innerText = "▶️ Resume";
-    }
-  }
-
-  // Stop Reading
-  function stopSpeech() {
-    speechSynthesis.cancel();
-    isPaused = false;
-    document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
-  }
-
-  // Function to Read with Highlight and Speak
+  // Function to Read with Highlighted Text
   function speakNext() {
     if (currentIndex >= window.graceQueue.length) return;
 
@@ -330,52 +311,27 @@
     speechSynthesis.speak(speechInstance);
   }
 
-  // Add Bookmark
-  function addBookmark(book, chapter, verse, text) {
-    const note = prompt(`Add a note for ${book} ${chapter}:${verse}`) || "";
-    const entry = {
-      book,
-      chapter,
-      verse,
-      text,
-      note,
-      timestamp: new Date().toISOString()
-    };
-    const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
-    bookmarks.push(entry);
-    localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
-    alert("📌 Bookmark saved!");
+  // Pause or Resume Reading
+  function togglePauseResume() {
+    if (isPaused) {
+      speechSynthesis.resume();
+      isPaused = false;
+      document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+    } else {
+      speechSynthesis.pause();
+      isPaused = true;
+      document.getElementById("pauseResumeBtn").innerText = "▶️ Resume";
+    }
   }
 
-  // Voice Command Functionality
-  function startVoice() {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.start();
-
-    recognition.onresult = function (event) {
-      const transcript = event.results[0][0].transcript;
-      feedback.textContent = `Heard: "${transcript}"`;
-
-      if (transcript.toLowerCase().includes("read with highlight")) {
-        readHighlighted();
-      } else if (transcript.toLowerCase().includes("read")) {
-        readSelected();
-      } else if (transcript.toLowerCase().includes("display")) {
-        displayScripture();
-      } else if (transcript.toLowerCase().includes("pause")) {
-        togglePauseResume();
-      } else if (transcript.toLowerCase().includes("stop")) {
-        stopSpeech();
-      }
-    };
-
-    recognition.onerror = function (event) {
-      feedback.textContent = "Voice error: " + event.error;
-      console.error("Voice Recognition Error:", event.error);
-    };
+  // Stop Reading Completely
+  function stopReading() {
+    speechSynthesis.cancel();
+    window.graceQueue = [];
+    isPaused = false;
+    currentIndex = 0;
+    document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+    display.innerText = "Reading stopped.";
   }
 
   // Initialize Voice Selection
@@ -384,7 +340,6 @@
       document.body.classList.add("night-mode");
       document.getElementById("themeToggle").checked = true;
     }
-
     speechSynthesis.onvoiceschanged = () => {
       selectedVoice = speechSynthesis.getVoices()[0];
     };
