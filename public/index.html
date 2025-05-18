@@ -104,10 +104,11 @@
   </div>
 
   <div>
-    <button onclick="readText()">▶️ Start Reading (Full)</button>
+    <button onclick="readSelected()">📘 Start Reading</button>
     <button onclick="stopSpeech()">⏹️ Stop/Pause</button>
     <button onclick="readHighlighted()">🔍 Read with Highlight</button>
     <button onclick="startVoice()">🎙️ Voice Command</button>
+    <button onclick="window.location.href='/faith-hub.html'">🌐 Faith Hub</button>
    </div>
 
   <div>
@@ -184,8 +185,7 @@
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
     <input id="startVerseInput" type="number" placeholder="Start Verse" min="1" />
     <input id="endVerseInput" type="number" placeholder="End Verse (optional)" min="1" />
-    <button onclick="readSelected()">📘 Read Selection</button>
-  </div>
+    </div>
 
   <div class="scripture-box" id="verseDisplay">
     Click "Start Reading" or use voice command
@@ -194,8 +194,7 @@
   <div id="voiceFeedback"></div>
 
    <div style="margin-top: 40px">
-   <button onclick="window.location.href='/faith-hub.html'">🌐 Faith Hub</button>
- </div>
+  </div>
   
 <script>
   const display = document.getElementById("verseDisplay");
