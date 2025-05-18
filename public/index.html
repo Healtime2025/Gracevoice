@@ -259,13 +259,13 @@
 
         if (!startVerse && !endVerse) {
           Object.keys(data.verses).forEach(key => {
-            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]}</span>`;
             spoken.push(data.verses[key]);
           });
         } else {
           for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
-              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
               spoken.push(data.verses[i]);
             }
           }
@@ -279,6 +279,48 @@
       .catch(err => {
         display.innerText = "⚠️ Error loading verses.";
       });
+  }
+
+  // Function to Read with Highlight
+  function readHighlighted() {
+    if (!window.graceQueue || window.graceQueue.length === 0) return;
+    let index = 0;
+    function speakNext() {
+      if (index >= window.graceQueue.length) return;
+      const { id, text } = window.graceQueue[index];
+      document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+      const el = document.getElementById(`verse-${index + 1}`);
+      if (el) {
+        el.classList.add('active-verse');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
+      utter.pitch = 1;
+      utter.rate = 0.95;
+      utter.onend = () => { index++; speakNext(); };
+      speechSynthesis.speak(utter);
+    }
+    speakNext();
+  }
+
+  // Function to Start Voice Command
+  function startVoice() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.start();
+
+    recognition.onresult = function (event) {
+      const transcript = event.results[0][0].transcript;
+      feedback.textContent = `Heard: "${transcript}"`;
+      readText(transcript);
+    };
+
+    recognition.onerror = function (event) {
+      feedback.textContent = "Voice error: " + event.error;
+    };
   }
 
   // Function to Read Text Aloud
