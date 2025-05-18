@@ -220,20 +220,24 @@
       .then(res => res.json())
       .then(data => {
         let html = "";
+        window.graceQueue = [];
 
         if (!startVerse && !endVerse) {
           Object.keys(data.verses).forEach(key => {
             html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+            window.graceQueue.push(data.verses[key]);
           });
         } else {
           for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
               html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+              window.graceQueue.push(data.verses[i]);
             }
           }
         }
 
         display.innerHTML = html;
+        lastReadText = window.graceQueue.join(" ");
       })
       .catch(err => {
         display.innerText = "⚠️ Error loading verses.";
@@ -241,27 +245,32 @@
       });
   }
 
-  // Function to Read Selected Verses
+  // Function to Read Selected Verses without Highlight
   function readSelected() {
-    if (!window.graceQueue.length) return;
+    if (!window.graceQueue.length) {
+      return alert("No verses loaded. Display Scripture first.");
+    }
     readText(window.graceQueue.join(" "));
   }
 
   // Function to Read with Highlight and Speak
   function readHighlighted() {
-    if (!window.graceQueue || window.graceQueue.length === 0) return;
-    let index = 0;
+    if (!window.graceQueue.length) {
+      return alert("No verses loaded. Display Scripture first.");
+    }
 
+    let index = 0;
     function speakNext() {
       if (index >= window.graceQueue.length) return;
+
       const verseText = window.graceQueue[index];
+      const verseElement = document.getElementById(`verse-${index + 1}`);
 
       // Highlight the current verse
       document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
-      const el = document.getElementById(`verse-${index + 1}`);
-      if (el) {
-        el.classList.add('active-verse');
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (verseElement) {
+        verseElement.classList.add('active-verse');
+        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
       // Read the text
@@ -275,15 +284,14 @@
         speakNext(); // Move to the next verse
       };
 
-      speechSynthesis.cancel(); // Stop any previous speech
-      speechSynthesis.speak(utter); // Speak the verse
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
     }
 
-    window.graceQueue = Array.from(document.querySelectorAll('.verse-line')).map(el => el.innerText);
     speakNext();
   }
 
-  // Function to Read Text Aloud
+  // Function to Read Text Aloud (Universal)
   function readText(text = display.innerText) {
     const voices = speechSynthesis.getVoices();
     const speech = new SpeechSynthesisUtterance(text);
@@ -328,10 +336,15 @@
     recognition.onresult = function (event) {
       const transcript = event.results[0][0].transcript;
       feedback.textContent = `Heard: "${transcript}"`;
-      if (transcript.toLowerCase().includes("read")) {
+
+      if (transcript.toLowerCase().includes("read with highlight")) {
+        readHighlighted();
+      } else if (transcript.toLowerCase().includes("read")) {
         readSelected();
       } else if (transcript.toLowerCase().includes("display")) {
         displayScripture();
+      } else if (transcript.toLowerCase().includes("stop")) {
+        stopSpeech();
       }
     };
 
