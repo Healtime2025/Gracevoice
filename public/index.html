@@ -333,8 +333,6 @@
       selectedVoice = speechSynthesis.getVoices()[0];
     };
   };
-</script>
-</body>
 <script>
   const display = document.getElementById("verseDisplay");
   const feedback = document.getElementById("voiceFeedback");
@@ -373,7 +371,6 @@
       });
   }
 
-  <script>
   // Load user preferences (Theme and Voice)
   function applyUserPreferences() {
     // Apply Theme
@@ -393,5 +390,5 @@
   speechSynthesis.onvoiceschanged = applyUserPreferences;
   window.onload = applyUserPreferences;
 </script>
-
+</body>
 </html>
