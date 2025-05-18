@@ -248,73 +248,84 @@ function readSelected() {
 
   if (book && !chapter) {
     // Load entire book (chapter by chapter)
-    let chapter = 1;
-    const verses = {};
-
-    async function loadFullBook() {
-      while (true) {
-        const response = await fetch(`/api/fetch-script.js?book=${encodeURIComponent(book)}&chapter=${chapter}`);
-        const data = await response.json();
-        if (data.error || !data.verses) break;
-
-        Object.entries(data.verses).forEach(([verse, text]) => {
-          verses[`${chapter}:${verse}`] = text;
-          spoken.push(text);
-        });
-        chapter++;
-      }
-
-      if (Object.keys(verses).length === 0) {
-        display.innerText = "⚠️ No verses found in this book.";
-        return;
-      }
-
-      display.innerHTML = Object.entries(verses)
-        .map(([ref, text]) => `<span class='verse-line'><b>${ref}.</b> ${text}</span>`)
-        .join("\n");
-
-      lastReadText = spoken.join(" ");
-      readText(lastReadText);
-    }
-
-    loadFullBook();
+    loadFullBook(book);
   } else if (book && chapter) {
     // Load specific chapter
-    fetch(`/api/fetch-script.js?book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) {
-          display.innerText = "⚠️ " + data.error;
-          return;
-        }
-
-        let html = "";
-        if (!isNaN(startVerse) && !isNaN(endVerse)) {
-          for (let i = startVerse; i <= endVerse; i++) {
-            if (data.verses[i]) {
-              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
-              spoken.push(data.verses[i]);
-            }
-          }
-        } else if (!isNaN(startVerse)) {
-          const txt = data.verses[startVerse];
-          html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
-          spoken.push(txt);
-        } else {
-          html = Object.entries(data.verses)
-            .map(([key, value]) => `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${value}</span>`)
-            .join("\n");
-          spoken = Object.values(data.verses);
-        }
-
-        display.innerHTML = html;
-        lastReadText = spoken.join(" ");
-        readText(lastReadText);
-      })
-      .catch(err => display.innerText = "⚠️ Error loading chapter or verses.");
+    loadChapter(book, chapter, startVerse, endVerse);
   } else {
     display.innerText = "⚠️ Please select a book or chapter.";
   }
+}
+
+// Function to Load Entire Book (Chapter by Chapter)
+async function loadFullBook(book) {
+  const display = document.getElementById("verseDisplay");
+  let chapter = 1;
+  const verses = {};
+  let spoken = [];
+
+  while (true) {
+    const response = await fetch(`/api/fetch-script.js?book=${encodeURIComponent(book)}&chapter=${chapter}`);
+    const data = await response.json();
+    if (data.error || !data.verses) break;
+
+    Object.entries(data.verses).forEach(([verse, text]) => {
+      verses[`${chapter}:${verse}`] = text;
+      spoken.push(text);
+    });
+    chapter++;
+  }
+
+  if (Object.keys(verses).length === 0) {
+    display.innerText = "⚠️ No verses found in this book.";
+    return;
+  }
+
+  display.innerHTML = Object.entries(verses)
+    .map(([ref, text]) => `<span class='verse-line'><b>${ref}.</b> ${text}</span>`)
+    .join("\n");
+
+  lastReadText = spoken.join(" ");
+  readText(lastReadText);
+}
+
+// Function to Load a Specific Chapter or Verse Range
+function loadChapter(book, chapter, startVerse, endVerse) {
+  const display = document.getElementById("verseDisplay");
+  let spoken = [];
+
+  fetch(`/api/fetch-script.js?book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        display.innerText = "⚠️ " + data.error;
+        return;
+      }
+
+      let html = "";
+      if (!isNaN(startVerse) && !isNaN(endVerse)) {
+        for (let i = startVerse; i <= endVerse; i++) {
+          if (data.verses[i]) {
+            html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
+            spoken.push(data.verses[i]);
+          }
+        }
+      } else if (!isNaN(startVerse)) {
+        const txt = data.verses[startVerse];
+        html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
+        spoken.push(txt);
+      } else {
+        html = Object.entries(data.verses)
+          .map(([key, value]) => `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${value}</span>`)
+          .join("\n");
+        spoken = Object.values(data.verses);
+      }
+
+      display.innerHTML = html;
+      lastReadText = spoken.join(" ");
+      readText(lastReadText);
+    })
+    .catch(err => display.innerText = "⚠️ Error loading chapter or verses.");
 }
 </script>
 
