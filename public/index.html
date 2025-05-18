@@ -235,65 +235,46 @@
     alert("📌 Bookmark saved!");
   }
 
-function readSelected() {
-  const book = document.getElementById("bookSelect").value;
-  const chapter = document.getElementById("chapterInput").value;
-  const startVerse = parseInt(document.getElementById("startVerseInput").value);
-  const endVerse = parseInt(document.getElementById("endVerseInput").value);
-  const display = document.getElementById("verseDisplay");
+  function readSelected() {
+    const book = document.getElementById("bookSelect").value;
+    const chapter = document.getElementById("chapterInput").value;
+    const startVerse = parseInt(document.getElementById("startVerseInput").value);
+    const endVerse = parseInt(document.getElementById("endVerseInput").value);
+    if (!book || !chapter) return alert("Please select book and chapter");
 
-  if (!book || !chapter) {
-    alert("Please select a book and chapter.");
-    return;
-  }
-
-  const url = `/api/fetch-script.js?book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}`;
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        display.innerText = `⚠️ ${data.error}`;
-        return;
-      }
-
-      let html = "";
-      let spoken = [];
-
-      // If both start and end verses are specified
-      if (!isNaN(startVerse) && !isNaN(endVerse)) {
-        for (let i = startVerse; i <= endVerse; i++) {
-          if (data.verses[i]) {
-            html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
-            spoken.push({ id: `verse-${i}`, text: data.verses[i] });
+    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        let html = "";
+        let spoken = [];
+        if (!isNaN(startVerse) && !isNaN(endVerse)) {
+          for (let i = startVerse; i <= endVerse; i++) {
+            if (data.verses[i]) {
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+              spoken.push({ id: `verse-${i}`, text: data.verses[i] });
+            }
           }
-        }
-      } 
-      // If only start verse is specified
-      else if (!isNaN(startVerse)) {
-        const txt = data.verses[startVerse];
-        if (txt) {
+        } else if (!isNaN(startVerse)) {
+          const txt = data.verses[startVerse];
           html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${startVerse}, "${txt.replace(/"/g, '\\"')}")'>🔖</button></span>`;
           spoken.push({ id: `verse-${startVerse}`, text: txt });
+        } else {
+          const keys = Object.keys(data.verses).slice(0, 3);
+          keys.forEach(k => {
+            html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${k}, "${data.verses[k].replace(/"/g, '\\"')}")'>🔖</button></span>`;
+            spoken.push({ id: `verse-${k}`, text: data.verses[k] });
+          });
         }
-      } 
-      // If no verse is specified, load the full chapter
-      else {
-        Object.keys(data.verses).forEach(k => {
-          html += `<span id='verse-${k}' class='verse-line'><b>${k}.</b> ${data.verses[k]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${k}, "${data.verses[k].replace(/"/g, '\\"')}")'>🔖</button></span>`;
-          spoken.push({ id: `verse-${k}`, text: data.verses[k] });
-        });
-      }
-
-      display.innerHTML = html;
-      window.graceQueue = spoken;
-      lastReadText = spoken.map(v => v.text).join(" ");
-      readText(lastReadText);
-    })
-    .catch(err => {
-      display.innerText = "⚠️ Error loading verses.";
-      console.error("Error fetching verses:", err);
-    });
-}
+        display.innerHTML = html;
+        window.graceQueue = spoken;
+        lastReadText = spoken.map(v => v.text).join(" ");
+        readText(lastReadText);
+      })
+      .catch(err => {
+        display.innerText = "⚠️ Error loading verses.";
+      });
+  }
 
   function readHighlighted() {
     if (!window.graceQueue || window.graceQueue.length === 0) return;
