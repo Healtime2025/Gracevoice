@@ -9,20 +9,37 @@ export default async function handler(req, res) {
   }
 
   try {
-    let apiUrl;
+    let verses = {};
 
-    // Load entire book if type is 'book'
+    // Load entire book (Chapter by Chapter)
     if (type === "book") {
-      apiUrl = `https://bible-api.com/${encodeURIComponent(book)}?translation=${translation}`;
-    } else {
-      // Load specific chapter or range
-      if (!chapter) {
-        return res.status(400).json({ error: "Missing chapter for verse selection." });
+      let chapter = 1;
+      while (true) {
+        const apiUrl = `https://bible-api.com/${encodeURIComponent(book)} ${chapter}?translation=${translation}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.error || !data.verses || data.verses.length === 0) break;
+
+        data.verses.forEach(v => {
+          verses[`${chapter}:${v.verse}`] = v.text.trim();
+        });
+        chapter++;
       }
-      const query = `${book} ${chapter}`;
-      apiUrl = `https://bible-api.com/${encodeURIComponent(query)}?translation=${translation}`;
+
+      if (Object.keys(verses).length === 0) {
+        return res.status(404).json({ error: "❌ No verses found in this book." });
+      }
+
+      return res.status(200).json({ book, chapter: "All", verses });
     }
 
+    // Load specific chapter or range
+    if (!chapter) {
+      return res.status(400).json({ error: "Missing chapter for verse selection." });
+    }
+
+    const apiUrl = `https://bible-api.com/${encodeURIComponent(book)} ${chapter}?translation=${translation}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
 
@@ -30,10 +47,9 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "❌ Verse or book not found." });
     }
 
-    // Convert API response to GraceVoice format
-    const verses = {};
+    // Convert API response to GraceVoice format (specific range)
     data.verses.forEach(v => {
-      if (type === "book" || (v.verse >= start && v.verse <= end)) {
+      if (v.verse >= start && v.verse <= end) {
         verses[v.verse.toString()] = v.text.trim();
       }
     });
@@ -44,8 +60,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       book: data.reference.split(" ")[0],
-      chapter: type === "book" ? "All" : data.chapter,
-      verses: verses
+      chapter,
+      verses
     });
 
   } catch (error) {
