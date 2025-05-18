@@ -5,22 +5,15 @@ export default async function handler(req, res) {
 
   // Validate inputs
   if (!book || !chapter) {
-    return res.status(400).json({ error: "❌ Missing book or chapter." });
+    return res.status(400).json({ error: "Missing book or chapter." });
   }
 
   try {
-    // Construct API URL
+    // Fetch the Bible text directly from the Bible API
     const query = `${book} ${chapter}`;
     const apiUrl = `https://bible-api.com/${encodeURIComponent(query)}?translation=${translation}`;
 
-    // Fetching data from the API
     const response = await fetch(apiUrl);
-    
-    if (!response.ok) {
-      // Handling HTTP errors
-      return res.status(response.status).json({ error: `❌ API Error: ${response.statusText}` });
-    }
-
     const data = await response.json();
 
     if (data.error) {
@@ -46,7 +39,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("❌ GraceVoice fetch error:", error);
-    return res.status(500).json({ error: "❌ Server Error", details: error.message });
+    console.error("Error fetching Bible text:", error);
+    return res.status(500).json({ error: "❌ GraceVoice fetch error", details: error.message });
   }
 }
