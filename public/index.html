@@ -104,11 +104,10 @@
   </div>
 
   <div>
-    <button onclick="readSelected()">📘 Start Reading</button>
+    <button onclick="readText()">▶️ Start Reading (Full)</button>
     <button onclick="stopSpeech()">⏹️ Stop/Pause</button>
     <button onclick="readHighlighted()">🔍 Read with Highlight</button>
     <button onclick="startVoice()">🎙️ Voice Command</button>
-    <button onclick="window.location.href='/faith-hub.html'">🌐 Faith Hub</button>
    </div>
 
   <div>
@@ -185,18 +184,18 @@
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
     <input id="startVerseInput" type="number" placeholder="Start Verse" min="1" />
     <input id="endVerseInput" type="number" placeholder="End Verse (optional)" min="1" />
-    </div>
- <button onclick="displayScripture()">📖 Display Scripture</button>
-  
+    <button onclick="readSelected()">📘 Read Selection</button>
+  </div>
+
   <div class="scripture-box" id="verseDisplay">
     Click "Start Reading" or use voice command
-   
   </div>
 
   <div id="voiceFeedback"></div>
 
    <div style="margin-top: 40px">
-    </div>
+   <button onclick="window.location.href='/faith-hub.html'">🌐 Faith Hub</button>
+ </div>
   
 <script>
   const display = document.getElementById("verseDisplay");
@@ -332,93 +331,28 @@
     speechSynthesis.onvoiceschanged = () => {
       selectedVoice = speechSynthesis.getVoices()[0];
     };
-
-<script>
-  const display = document.getElementById("verseDisplay");
-  const feedback = document.getElementById("voiceFeedback");
-  let lastReadText = "";
-  window.graceQueue = [];
-  let selectedVoice = null;
-
-  function startVoice() {
-    try {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.start();
-
-      recognition.onresult = function (event) {
-        const transcript = event.results[0][0].transcript;
-        feedback.textContent = `Heard: "${transcript}"`;
-        readText(transcript);
-      };
-
-      recognition.onerror = function (event) {
-        feedback.textContent = "Voice error: " + event.error;
-        console.error("Voice Recognition Error:", event.error);
-      };
-
-      recognition.onend = function () {
-        console.log("Voice recognition ended.");
-      };
-    } catch (error) {
-      console.error("Voice Recognition Error:", error);
-      alert("Your browser does not support voice recognition.");
-    }
-  }
-
-  function toggleTheme() {
-    document.body.classList.toggle("night-mode");
-    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
-  }
-
-  function displayScripture() {
-    const book = document.getElementById("bookSelect").value;
-    const chapter = document.getElementById("chapterInput").value;
-    if (!book || !chapter) {
-      alert("Please select book and chapter");
-      return;
-    }
-
-    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        let html = "";
-        if (data.error) {
-          display.innerText = "⚠️ Error loading verses.";
-          return;
-        }
-
-        Object.keys(data.verses).forEach(key => {
-          html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]}</span>`;
-        });
-
-        display.innerHTML = html;
-      })
-      .catch(err => {
-        display.innerText = "⚠️ Error loading verses.";
-        console.error("Error fetching verses:", err);
-      });
-  }
-
+  };
+</script>
+</body>
+  <script>
   // Load user preferences (Theme and Voice)
   function applyUserPreferences() {
     // Apply Theme
     if (localStorage.getItem("graceTheme") === "dark") {
       document.body.classList.add("night-mode");
-      document.getElementById("themeToggle").checked = true;
     }
 
     // Load Voice
-    window.speechSynthesis.onvoiceschanged = () => {
-      const savedVoice = localStorage.getItem("selectedVoice");
+    const savedVoice = localStorage.getItem("selectedVoice");
+    if (savedVoice) {
       const voices = speechSynthesis.getVoices();
-      selectedVoice = savedVoice ? voices.find(voice => voice.name === savedVoice) : voices[0];
-    };
+      selectedVoice = voices.find(voice => voice.name === savedVoice);
+    }
   }
 
-  // Initialize voice selection and theme on page load
+  // Initialize voice selection on page load
+  speechSynthesis.onvoiceschanged = applyUserPreferences;
   window.onload = applyUserPreferences;
 </script>
+
+</html>
