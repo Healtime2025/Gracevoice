@@ -340,6 +340,39 @@
   window.graceQueue = [];
   let selectedVoice = null;
 
+  function startVoice() {
+    try {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
+
+      recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript;
+        feedback.textContent = `Heard: "${transcript}"`;
+        readText(transcript);
+      };
+
+      recognition.onerror = function (event) {
+        feedback.textContent = "Voice error: " + event.error;
+        console.error("Voice Recognition Error:", event.error);
+      };
+
+      recognition.onend = function () {
+        console.log("Voice recognition ended.");
+      };
+    } catch (error) {
+      console.error("Voice Recognition Error:", error);
+      alert("Your browser does not support voice recognition.");
+    }
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle("night-mode");
+    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
+  }
+
   function displayScripture() {
     const book = document.getElementById("bookSelect").value;
     const chapter = document.getElementById("chapterInput").value;
@@ -366,29 +399,26 @@
       })
       .catch(err => {
         display.innerText = "⚠️ Error loading verses.";
-        console.error(err);
+        console.error("Error fetching verses:", err);
       });
   }
-</script>
 
   // Load user preferences (Theme and Voice)
   function applyUserPreferences() {
     // Apply Theme
     if (localStorage.getItem("graceTheme") === "dark") {
       document.body.classList.add("night-mode");
+      document.getElementById("themeToggle").checked = true;
     }
 
     // Load Voice
-    const savedVoice = localStorage.getItem("selectedVoice");
-    if (savedVoice) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      const savedVoice = localStorage.getItem("selectedVoice");
       const voices = speechSynthesis.getVoices();
-      selectedVoice = voices.find(voice => voice.name === savedVoice);
-    }
+      selectedVoice = savedVoice ? voices.find(voice => voice.name === savedVoice) : voices[0];
+    };
   }
 
-  // Initialize voice selection on page load
-  speechSynthesis.onvoiceschanged = applyUserPreferences;
+  // Initialize voice selection and theme on page load
   window.onload = applyUserPreferences;
 </script>
-</body>
-</html>
