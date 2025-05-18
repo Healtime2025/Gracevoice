@@ -243,84 +243,44 @@
 
   // Function to Read Selected Verses
   function readSelected() {
-    const book = document.getElementById("bookSelect").value;
-    const chapter = document.getElementById("chapterInput").value;
-    const startVerse = parseInt(document.getElementById("startVerseInput").value);
-    const endVerse = parseInt(document.getElementById("endVerseInput").value);
-
-    if (!book || !chapter) return alert("Please select book and chapter");
-
-    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        let html = "";
-        let spoken = [];
-
-        if (!startVerse && !endVerse) {
-          Object.keys(data.verses).forEach(key => {
-            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]}</span>`;
-            spoken.push(data.verses[key]);
-          });
-        } else {
-          for (let i = startVerse; i <= (endVerse || startVerse); i++) {
-            if (data.verses[i]) {
-              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
-              spoken.push(data.verses[i]);
-            }
-          }
-        }
-
-        display.innerHTML = html;
-        window.graceQueue = spoken;
-        lastReadText = spoken.join(" ");
-        readText(lastReadText);
-      })
-      .catch(err => {
-        display.innerText = "⚠️ Error loading verses.";
-      });
+    if (!window.graceQueue.length) return;
+    readText(window.graceQueue.join(" "));
   }
 
-  // Function to Read with Highlight
+  // Function to Read with Highlight and Speak
   function readHighlighted() {
     if (!window.graceQueue || window.graceQueue.length === 0) return;
     let index = 0;
+
     function speakNext() {
       if (index >= window.graceQueue.length) return;
-      const { id, text } = window.graceQueue[index];
+      const verseText = window.graceQueue[index];
+
+      // Highlight the current verse
       document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
       const el = document.getElementById(`verse-${index + 1}`);
       if (el) {
         el.classList.add('active-verse');
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      const utter = new SpeechSynthesisUtterance(text);
+
+      // Read the text
+      const utter = new SpeechSynthesisUtterance(verseText);
       utter.voice = selectedVoice || speechSynthesis.getVoices()[0];
       utter.pitch = 1;
       utter.rate = 0.95;
-      utter.onend = () => { index++; speakNext(); };
-      speechSynthesis.speak(utter);
+
+      utter.onend = () => {
+        index++;
+        speakNext(); // Move to the next verse
+      };
+
+      speechSynthesis.cancel(); // Stop any previous speech
+      speechSynthesis.speak(utter); // Speak the verse
     }
+
+    window.graceQueue = Array.from(document.querySelectorAll('.verse-line')).map(el => el.innerText);
     speakNext();
-  }
-
-  // Function to Start Voice Command
-  function startVoice() {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.start();
-
-    recognition.onresult = function (event) {
-      const transcript = event.results[0][0].transcript;
-      feedback.textContent = `Heard: "${transcript}"`;
-      readText(transcript);
-    };
-
-    recognition.onerror = function (event) {
-      feedback.textContent = "Voice error: " + event.error;
-    };
   }
 
   // Function to Read Text Aloud
@@ -357,12 +317,37 @@
     alert("📌 Bookmark saved!");
   }
 
+  // Voice Command Functionality
+  function startVoice() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.start();
+
+    recognition.onresult = function (event) {
+      const transcript = event.results[0][0].transcript;
+      feedback.textContent = `Heard: "${transcript}"`;
+      if (transcript.toLowerCase().includes("read")) {
+        readSelected();
+      } else if (transcript.toLowerCase().includes("display")) {
+        displayScripture();
+      }
+    };
+
+    recognition.onerror = function (event) {
+      feedback.textContent = "Voice error: " + event.error;
+      console.error("Voice Recognition Error:", event.error);
+    };
+  }
+
   // Initialize Voice Selection
   window.onload = () => {
     if (localStorage.getItem("graceTheme") === "dark") {
       document.body.classList.add("night-mode");
       document.getElementById("themeToggle").checked = true;
     }
+
     speechSynthesis.onvoiceschanged = () => {
       selectedVoice = speechSynthesis.getVoices()[0];
     };
