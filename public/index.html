@@ -203,8 +203,8 @@
   let lastReadText = "";
   window.graceQueue = [];
   let selectedVoice = null;
-  let isPaused = false;
   let currentIndex = 0;
+  let isPaused = false;
   let speechInstance = null;
 
   // Function to Display Scripture without Reading
@@ -223,24 +223,20 @@
       .then(res => res.json())
       .then(data => {
         let html = "";
-        window.graceQueue = [];
 
         if (!startVerse && !endVerse) {
           Object.keys(data.verses).forEach(key => {
             html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
-            window.graceQueue.push(data.verses[key]);
           });
         } else {
           for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
               html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
-              window.graceQueue.push(data.verses[i]);
             }
           }
         }
 
         display.innerHTML = html;
-        lastReadText = window.graceQueue.join(" ");
       })
       .catch(err => {
         display.innerText = "⚠️ Error loading verses.";
@@ -248,85 +244,80 @@
       });
   }
 
-  // Function to Read Selected Verses without Highlight
+  // Function to Read Selected Verses
   function readSelected() {
-    if (!window.graceQueue.length) {
-      return alert("No verses loaded. Display Scripture first.");
-    }
-    readText(window.graceQueue.join(" "));
+    const book = document.getElementById("bookSelect").value;
+    const chapter = document.getElementById("chapterInput").value;
+    const startVerse = parseInt(document.getElementById("startVerseInput").value);
+    const endVerse = parseInt(document.getElementById("endVerseInput").value);
+
+    if (!book || !chapter) return alert("Please select book and chapter");
+
+    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        let spoken = [];
+
+        if (!startVerse && !endVerse) {
+          Object.keys(data.verses).forEach(key => {
+            spoken.push(data.verses[key]);
+          });
+        } else {
+          for (let i = startVerse; i <= (endVerse || startVerse); i++) {
+            if (data.verses[i]) {
+              spoken.push(data.verses[i]);
+            }
+          }
+        }
+
+        window.graceQueue = spoken;
+        currentIndex = 0;
+        isPaused = false;
+        readTextQueue();
+      })
+      .catch(err => {
+        display.innerText = "⚠️ Error loading verses.";
+      });
   }
 
-  // Function to Read with Highlight and Speak
-  function readHighlighted() {
-    if (!window.graceQueue.length) {
-      return alert("No verses loaded. Display Scripture first.");
-    }
-
-    currentIndex = 0;
-    speakNext();
-  }
-
-  // Function to Read Text Aloud (Universal)
-  function readText(text) {
-    const voices = speechSynthesis.getVoices();
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.voice = selectedVoice || voices[0];
-    speech.pitch = 1;
-    speech.rate = 0.95;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(speech);
-    lastReadText = text;
-  }
-
-  // Pause or Resume Reading
-  function togglePauseResume() {
-    if (isPaused) {
-      speechSynthesis.resume();
-      isPaused = false;
-      document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
-    } else {
-      speechSynthesis.pause();
-      isPaused = true;
-      document.getElementById("pauseResumeBtn").innerText = "▶️ Resume";
-    }
-  }
-
-  // Stop Reading
-  function stopSpeech() {
-    speechSynthesis.cancel();
-    isPaused = false;
-    document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
-  }
-
-  // Function to Read with Highlight and Speak
-  function speakNext() {
-    if (currentIndex >= window.graceQueue.length) return;
-
-    const verseText = window.graceQueue[currentIndex];
-    const verseElement = document.getElementById(`verse-${currentIndex + 1}`);
-
-    // Highlight the current verse
-    document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
-    if (verseElement) {
-      verseElement.classList.add('active-verse');
-      verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Function to Read Text Queue
+  function readTextQueue() {
+    if (currentIndex >= window.graceQueue.length) {
+      return;
     }
 
-    // Read the text
-    speechInstance = new SpeechSynthesisUtterance(verseText);
+    const text = window.graceQueue[currentIndex];
+    speechInstance = new SpeechSynthesisUtterance(text);
     speechInstance.voice = selectedVoice || speechSynthesis.getVoices()[0];
     speechInstance.pitch = 1;
     speechInstance.rate = 0.95;
 
-    speechInstance.onend = () => {
+    speechInstance.onend = function () {
       if (!isPaused) {
         currentIndex++;
-        speakNext();
+        readTextQueue();
       }
     };
 
-    speechSynthesis.cancel();
-    speechSynthesis.speak(speechInstance);
+    if (!isPaused) {
+      speechSynthesis.speak(speechInstance);
+    }
+  }
+
+  // Toggle Pause/Resume
+  function togglePauseResume() {
+    if (!speechSynthesis.speaking) return;
+
+    if (isPaused) {
+      isPaused = false;
+      readTextQueue();
+      document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+    } else {
+      isPaused = true;
+      speechSynthesis.cancel();
+      document.getElementById("pauseResumeBtn").innerText = "▶️ Resume";
+    }
   }
 
   // Add Bookmark
@@ -346,35 +337,12 @@
     alert("📌 Bookmark saved!");
   }
 
-  // Voice Command Functionality
-  function startVoice() {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.start();
-
-    recognition.onresult = function (event) {
-      const transcript = event.results[0][0].transcript;
-      feedback.textContent = `Heard: "${transcript}"`;
-
-      if (transcript.toLowerCase().includes("read with highlight")) {
-        readHighlighted();
-      } else if (transcript.toLowerCase().includes("read")) {
-        readSelected();
-      } else if (transcript.toLowerCase().includes("display")) {
-        displayScripture();
-      } else if (transcript.toLowerCase().includes("pause")) {
-        togglePauseResume();
-      } else if (transcript.toLowerCase().includes("stop")) {
-        stopSpeech();
-      }
-    };
-
-    recognition.onerror = function (event) {
-      feedback.textContent = "Voice error: " + event.error;
-      console.error("Voice Recognition Error:", event.error);
-    };
+  // Stop Reading
+  function stopSpeech() {
+    speechSynthesis.cancel();
+    isPaused = false;
+    currentIndex = 0;
+    document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
   }
 
   // Initialize Voice Selection
@@ -383,7 +351,6 @@
       document.body.classList.add("night-mode");
       document.getElementById("themeToggle").checked = true;
     }
-
     speechSynthesis.onvoiceschanged = () => {
       selectedVoice = speechSynthesis.getVoices()[0];
     };
