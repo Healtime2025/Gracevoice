@@ -222,19 +222,15 @@
         let html = "";
 
         if (!startVerse && !endVerse) {
-          // Display full chapter
           Object.keys(data.verses).forEach(key => {
-            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\"')}")'>🔖</button></span>`;
+            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
           });
-        } else if (!isNaN(startVerse) && !isNaN(endVerse)) {
-          for (let i = startVerse; i <= endVerse; i++) {
+        } else {
+          for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
-              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\"')}")'>🔖</button></span>`;
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
             }
           }
-        } else if (!isNaN(startVerse)) {
-          const txt = data.verses[startVerse];
-          html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${startVerse}, "${txt.replace(/"/g, '\"')}")'>🔖</button></span>`;
         }
 
         display.innerHTML = html;
@@ -263,20 +259,16 @@
 
         if (!startVerse && !endVerse) {
           Object.keys(data.verses).forEach(key => {
-            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]}</span>`;
+            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
             spoken.push(data.verses[key]);
           });
-        } else if (!isNaN(startVerse) && !isNaN(endVerse)) {
-          for (let i = startVerse; i <= endVerse; i++) {
+        } else {
+          for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
-              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
               spoken.push(data.verses[i]);
             }
           }
-        } else if (!isNaN(startVerse)) {
-          const txt = data.verses[startVerse];
-          html = `<span id='verse-${startVerse}' class='verse-line'><b>${startVerse}.</b> ${txt}</span>`;
-          spoken.push(txt);
         }
 
         display.innerHTML = html;
