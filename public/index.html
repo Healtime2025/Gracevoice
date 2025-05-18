@@ -228,13 +228,13 @@
 
         if (!startVerse && !endVerse) {
           Object.keys(data.verses).forEach(key => {
-            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]}</span>`;
+            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
             window.graceQueue.push(data.verses[key]);
           });
         } else {
           for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
-              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]}</span>`;
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
               window.graceQueue.push(data.verses[i]);
             }
           }
@@ -247,19 +247,6 @@
         display.innerText = "⚠️ Error loading verses.";
         console.error("Error fetching verses:", err);
       });
-  }
-
-  // Function to Read Text Aloud
-  function readText(text) {
-    if (!text) return;
-    const voices = speechSynthesis.getVoices();
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.voice = selectedVoice || voices[0];
-    speech.pitch = 1;
-    speech.rate = 0.95;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(speech);
-    lastReadText = text;
   }
 
   // Function to Read Selected Verses without Highlight
@@ -280,7 +267,42 @@
     speakNext();
   }
 
-  // Function to Read with Highlighted Text
+  // Function to Read Text Aloud (Universal)
+  function readText(text) {
+    const voices = speechSynthesis.getVoices();
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.voice = selectedVoice || voices[0];
+    speech.pitch = 1;
+    speech.rate = 0.95;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(speech);
+    lastReadText = text;
+  }
+
+  // Pause or Resume Reading
+  function togglePauseResume() {
+    if (isPaused) {
+      speechSynthesis.resume();
+      isPaused = false;
+      document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+    } else {
+      speechSynthesis.pause();
+      isPaused = true;
+      document.getElementById("pauseResumeBtn").innerText = "▶️ Resume";
+    }
+  }
+
+  // ✅ Stop Reading (New Function)
+  function stopReading() {
+    speechSynthesis.cancel();
+    isPaused = false;
+    currentIndex = 0;
+    window.graceQueue = [];
+    document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+    document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+  }
+
+  // Function to Read with Highlight and Speak
   function speakNext() {
     if (currentIndex >= window.graceQueue.length) return;
 
@@ -311,27 +333,21 @@
     speechSynthesis.speak(speechInstance);
   }
 
-  // Pause or Resume Reading
-  function togglePauseResume() {
-    if (isPaused) {
-      speechSynthesis.resume();
-      isPaused = false;
-      document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
-    } else {
-      speechSynthesis.pause();
-      isPaused = true;
-      document.getElementById("pauseResumeBtn").innerText = "▶️ Resume";
-    }
-  }
-
-  // Stop Reading Completely
-  function stopReading() {
-    speechSynthesis.cancel();
-    window.graceQueue = [];
-    isPaused = false;
-    currentIndex = 0;
-    document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
-    display.innerText = "Reading stopped.";
+  // Add Bookmark
+  function addBookmark(book, chapter, verse, text) {
+    const note = prompt(`Add a note for ${book} ${chapter}:${verse}`) || "";
+    const entry = {
+      book,
+      chapter,
+      verse,
+      text,
+      note,
+      timestamp: new Date().toISOString()
+    };
+    const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+    bookmarks.push(entry);
+    localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
+    alert("📌 Bookmark saved!");
   }
 
   // Initialize Voice Selection
@@ -340,6 +356,7 @@
       document.body.classList.add("night-mode");
       document.getElementById("themeToggle").checked = true;
     }
+
     speechSynthesis.onvoiceschanged = () => {
       selectedVoice = speechSynthesis.getVoices()[0];
     };
