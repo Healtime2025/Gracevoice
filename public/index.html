@@ -243,11 +243,17 @@ function readSelected() {
   const display = document.getElementById("verseDisplay");
   let spoken = [];
 
+  display.innerText = "⏳ Loading...";
+
   if (book && !chapter) {
     // Load entire book
-    fetch(`/api/fetch-script.js?book=${encodeURIComponent(book)}`)
+    fetch(`/api/fetch-script.js?book=${encodeURIComponent(book)}&type=book`)
       .then(res => res.json())
       .then(data => {
+        if (data.error) {
+          display.innerText = "⚠️ " + data.error;
+          return;
+        }
         let html = Object.entries(data.verses)
           .map(([key, value]) => `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${value} <button class='bookmark-btn' onclick='addBookmark("${book}", "All", ${key}, "${value.replace(/"/g, '\\"')}")'>🔖</button></span>`)
           .join("\n");
@@ -262,6 +268,11 @@ function readSelected() {
     fetch(`/api/fetch-script.js?book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}`)
       .then(res => res.json())
       .then(data => {
+        if (data.error) {
+          display.innerText = "⚠️ " + data.error;
+          return;
+        }
+
         let html = "";
         if (!isNaN(startVerse) && !isNaN(endVerse)) {
           for (let i = startVerse; i <= endVerse; i++) {
