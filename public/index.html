@@ -257,7 +257,7 @@
     readText(window.graceQueue.join(" "));
   }
 
-  // Function to Read with Highlight and Speak
+  // Function to Read with Highlight and Speak (Multiple Verses)
   function readHighlighted() {
     if (!window.graceQueue.length) {
       return alert("No verses loaded. Display Scripture first.");
@@ -292,17 +292,16 @@
     }
   }
 
-  // ✅ Stop Reading (New Function)
+  // ✅ Stop Reading (Improved)
   function stopReading() {
     speechSynthesis.cancel();
     isPaused = false;
     currentIndex = 0;
-    window.graceQueue = [];
     document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
     document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
   }
 
-  // Function to Read with Highlight and Speak
+  // Function to Read with Highlight and Speak (Fixed for Multiple Verses)
   function speakNext() {
     if (currentIndex >= window.graceQueue.length) return;
 
@@ -323,7 +322,7 @@
     speechInstance.rate = 0.95;
 
     speechInstance.onend = () => {
-      if (!isPaused) {
+      if (!isPaused && currentIndex < window.graceQueue.length - 1) {
         currentIndex++;
         speakNext();
       }
@@ -333,7 +332,7 @@
     speechSynthesis.speak(speechInstance);
   }
 
-  // Add Bookmark
+  // ✅ Add Bookmark (Fixed)
   function addBookmark(book, chapter, verse, text) {
     const note = prompt(`Add a note for ${book} ${chapter}:${verse}`) || "";
     const entry = {
