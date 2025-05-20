@@ -35,8 +35,16 @@
     .bookmark p {
       margin: 6px 0;
     }
+    .bookmark textarea {
+      width: 100%;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 15px;
+      resize: vertical;
+      margin-bottom: 8px;
+    }
     .bookmark button {
-      margin-top: 10px;
+      margin-top: 8px;
       margin-right: 8px;
       padding: 8px 16px;
       font-size: 15px;
@@ -88,6 +96,11 @@
     .night-mode .bookmark button:hover {
       background-color: #555;
     }
+    .night-mode .bookmark textarea {
+      background-color: #444;
+      color: #fff;
+      border: 1px solid #666;
+    }
     .night-mode .nav-bar {
       background: #2b2b2b;
     }
@@ -112,88 +125,69 @@
   <button onclick="window.location.href='settings.html'">⚙️ Settings</button>
 </div>
 
-<style>
-  .nav-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #1976d2;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+<script>
+  function loadBookmarks() {
+    const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+    const container = document.getElementById("bookmarkList");
+    if (bookmarks.length === 0) {
+      container.innerHTML = "<p>No bookmarks saved yet.</p>";
+      return;
+    }
+
+    container.innerHTML = "";
+    bookmarks.forEach((b, index) => {
+      const div = document.createElement("div");
+      div.className = "bookmark";
+      div.innerHTML = `
+        <h3>📖 ${b.book} ${b.chapter}:${b.verse}</h3>
+        <p>${b.text}</p>
+        <label><strong>📝 Note:</strong></label><br/>
+        <textarea id="note-${index}" rows="3">${b.note || ""}</textarea>
+        <p><small>⏱️ Saved: ${new Date(b.timestamp).toLocaleString()}</small></p>
+        <button onclick="speak('${b.text.replace(/'/g, "\\'")}')">🔊 Read</button>
+        <button onclick="saveNote(${index})">💾 Save</button>
+        <button onclick="removeBookmark(${index})">❌ Remove</button>
+      `;
+      container.appendChild(div);
+    });
   }
 
-  .nav-bar button {
-    background: #ffffff;
-    color: #1976d2;
-    border: none;
-    padding: 10px 15px;
-    font-size: 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.3s;
+  function speak(text) {
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.pitch = 1;
+    utterance.rate = 0.95;
+    speechSynthesis.speak(utterance);
   }
 
-  .nav-bar button:hover {
-    background: #145a9e;
-    color: #ffffff;
+  function removeBookmark(index) {
+    const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+    bookmarks.splice(index, 1);
+    localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
+    loadBookmarks();
   }
-</style>
 
+  function saveNote(index) {
+    const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+    const newNote = document.getElementById(`note-${index}`).value;
+    bookmarks[index].note = newNote;
+    bookmarks[index].timestamp = new Date().toISOString();
+    localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
+    alert("✅ Note updated!");
+    loadBookmarks();
+  }
 
-  <script>
-    function loadBookmarks() {
-      const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
-      const container = document.getElementById("bookmarkList");
-      if (bookmarks.length === 0) {
-        container.innerHTML = "<p>No bookmarks saved yet.</p>";
-        return;
-      }
+  function toggleTheme() {
+    document.body.classList.toggle("night-mode");
+    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
+  }
 
-      container.innerHTML = "";
-      bookmarks.forEach((b, index) => {
-        const div = document.createElement("div");
-        div.className = "bookmark";
-        div.innerHTML = `
-          <h3>📖 ${b.book} ${b.chapter}:${b.verse}</h3>
-          <p>${b.text}</p>
-          <p><strong>📝 Note:</strong> ${b.note || "(none)"}</p>
-          <p><small>⏱️ Saved: ${new Date(b.timestamp).toLocaleString()}</small></p>
-          <button onclick="speak('${b.text.replace(/'/g, "\\'")}')">🔊 Read</button>
-          <button onclick="removeBookmark(${index})">❌ Remove</button>
-        `;
-        container.appendChild(div);
-      });
+  window.onload = () => {
+    if (localStorage.getItem("graceTheme") === "dark") {
+      document.body.classList.add("night-mode");
     }
-
-    function speak(text) {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.pitch = 1;
-      utterance.rate = 0.95;
-      speechSynthesis.speak(utterance);
-    }
-
-    function removeBookmark(index) {
-      const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
-      bookmarks.splice(index, 1);
-      localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
-      loadBookmarks();
-    }
-
-    function toggleTheme() {
-      document.body.classList.toggle("night-mode");
-      localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
-    }
-
-    window.onload = () => {
-      if (localStorage.getItem("graceTheme") === "dark") {
-        document.body.classList.add("night-mode");
-      }
-      loadBookmarks();
-    };
-  </script>
+    loadBookmarks();
+  };
+</script>
 </body>
 </html>
