@@ -12,13 +12,6 @@
       text-align: center;
       padding: 40px;
     }
-    .night-mode select,
-    .night-mode input[type="number"],
-    .night-mode #voiceSelect {
-      background-color: #444;
-      color: #fff;
-      border-color: #666;
-    }
     h1 {
       font-size: 32px;
       color: #2c3e50;
@@ -108,10 +101,6 @@
 
   <div>
     <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
-    <label for="voiceSelect" style="margin-left: 20px;">🎤 Select Voice:</label>
-    <select id="voiceSelect" onchange="updateVoice()" style="padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;">
-      <option disabled selected>Loading voices...</option>
-    </select>
   </div>
 
   <div>
@@ -120,8 +109,7 @@
     <button id="pauseResumeBtn" onclick="togglePauseResume()">⏸️ Pause/Resume</button>
     <button onclick="readHighlighted()">🔍 Read with Highlight</button>
     <button onclick="startVoice()">🎙️ Voice Command</button>
-  </div>
-
+   </div>
 
   <div>
     <select id="bookSelect">
@@ -231,7 +219,7 @@
       return alert("Please select book and chapter");
     }
 
-    const url = /api/fetch-script.js?book=${book}&chapter=${chapter};
+    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
     fetch(url)
       .then(res => res.json())
       .then(data => {
@@ -240,19 +228,19 @@
 
         if (!startVerse && !endVerse) {
           Object.keys(data.verses).forEach(key => {
-            html += <span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>;
+            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
             window.graceQueue.push(data.verses[key]);
           });
         } else {
           for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
-              html += <span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>;
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
               window.graceQueue.push(data.verses[i]);
             }
           }
         }
 
-                display.innerHTML = html;
+        display.innerHTML = html;
         lastReadText = window.graceQueue.join(" ");
       })
       .catch(err => {
@@ -360,3 +348,24 @@
     localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
     alert("📌 Bookmark saved!");
   }
+
+  // Initialize Voice Selection
+  window.onload = () => {
+    if (localStorage.getItem("graceTheme") === "dark") {
+      document.body.classList.add("night-mode");
+      document.getElementById("themeToggle").checked = true;
+    }
+
+    speechSynthesis.onvoiceschanged = () => {
+      selectedVoice = speechSynthesis.getVoices()[0];
+    };
+  };
+
+  // Toggle Theme
+  function toggleTheme() {
+    document.body.classList.toggle("night-mode");
+    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
+  }
+</script>
+
+</ht
