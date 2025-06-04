@@ -101,6 +101,18 @@
 
   <div>
     <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
+    
+  <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
+
+  <label for="voiceSelect" style="margin-left: 20px;">🎤 Select Voice:</label>
+  <select id="voiceSelect" style="padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;">
+    <option disabled selected>Loading voices...</option>
+  </select>
+
+  <button onclick="populateVoices()" style="margin-left: 10px; padding: 10px 16px; font-size: 14px; border-radius: 6px; border: none; background: #1976d2; color: white; cursor: pointer;">
+    🔁 Refresh Voices
+  </button>
+
   </div>
 
   <div>
