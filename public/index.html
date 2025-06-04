@@ -349,25 +349,17 @@
     alert("📌 Bookmark saved!");
   }
 
-  let selectedVoice = null;
+  // Initialize Voice Selection
+  window.onload = () => {
+    if (localStorage.getItem("graceTheme") === "dark") {
+      document.body.classList.add("night-mode");
+      document.getElementById("themeToggle").checked = true;
+    }
 
-window.onload = () => {
-  // Apply saved theme
-  if (localStorage.getItem("graceTheme") === "dark") {
-    document.body.classList.add("night-mode");
-    document.getElementById("themeToggle").checked = true;
-  }
-
-  // Load voice when available
-  speechSynthesis.onvoiceschanged = () => {
-    const voices = speechSynthesis.getVoices();
-    const savedVoiceName = localStorage.getItem("selectedVoice");
-    const matchedVoice = voices.find(v => v.name === savedVoiceName);
-
-    selectedVoice = matchedVoice || voices[0]; // Fallback to first voice
+    speechSynthesis.onvoiceschanged = () => {
+      selectedVoice = speechSynthesis.getVoices()[0];
+    };
   };
-};
-
 
   // Toggle Theme
   function toggleTheme() {
