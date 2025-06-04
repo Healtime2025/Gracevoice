@@ -361,38 +361,32 @@
     alert("📌 Bookmark saved!");
   }
 // Voice Dropdown Functions
-function populateVoiceList() {
+function populateVoices() {
   const voiceSelect = document.getElementById("voiceSelect");
   const voices = speechSynthesis.getVoices();
   voiceSelect.innerHTML = "";
-  voices.forEach((voice, index) => {
+
+  voices.forEach((voice) => {
     const option = document.createElement("option");
-    option.textContent = `${voice.name} (${voice.lang})`;
-    option.value = index;
+    option.value = voice.name;
+    option.text = `${voice.name} (${voice.lang})`;
     voiceSelect.appendChild(option);
   });
 
-  if (!selectedVoice && voices.length > 0) {
-    selectedVoice = voices[0];
-    voiceSelect.selectedIndex = 0;
-  }
-}
-
-function updateVoice() {
-  const voiceIndex = document.getElementById("voiceSelect").value;
-  const voices = speechSynthesis.getVoices();
-  selectedVoice = voices[voiceIndex];
-}
-
-  // Initialize Voice Selection
-  window.onload = () => {
-  if (localStorage.getItem("graceTheme") === "dark") {
-    document.body.classList.add("night-mode");
-    document.getElementById("themeToggle").checked = true;
+  const savedVoice = localStorage.getItem("selectedVoice");
+  if (savedVoice) {
+    voiceSelect.value = savedVoice;
   }
 
-  populateVoiceList(); // 👈 Added
-  speechSynthesis.onvoiceschanged = populateVoiceList; // 👈 Updated
+  voiceSelect.onchange = () => {
+    localStorage.setItem("selectedVoice", voiceSelect.value);
+    alert("✅ Voice setting saved!");
+  };
+}
+
+speechSynthesis.onvoiceschanged = populateVoices;
+
+  populateVoices();
 };
 
   // Toggle Theme
