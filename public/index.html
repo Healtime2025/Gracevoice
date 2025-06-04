@@ -101,11 +101,18 @@
 
   <div>
     <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
-    <label for="voiceSelect" style="margin-left: 20px;">🎤 Select Voice:</label>
-    <select id="voiceSelect">
-      <option disabled selected>Loading voices...</option>
-    </select>
-    <button onclick="populateVoices()">🔁 Refresh Voices</button>
+    
+  <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
+
+  <label for="voiceSelect" style="margin-left: 20px;">🎤 Select Voice:</label>
+  <select id="voiceSelect" style="padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;">
+    <option disabled selected>Loading voices...</option>
+  </select>
+
+  <button onclick="populateVoices()" style="margin-left: 10px; padding: 10px 16px; font-size: 14px; border-radius: 6px; border: none; background: #1976d2; color: white; cursor: pointer;">
+    🔁 Refresh Voices
+  </button>
+
   </div>
 
   <div>
@@ -113,10 +120,80 @@
     <button onclick="stopReading()">⏹️ Stop Reading</button>
     <button id="pauseResumeBtn" onclick="togglePauseResume()">⏸️ Pause/Resume</button>
     <button onclick="readHighlighted()">🔍 Read with Highlight</button>
-  </div>
+    <button onclick="startVoice()">🎙️ Voice Command</button>
+   </div>
 
   <div>
-    <select id="bookSelect"></select>
+    <select id="bookSelect">
+<option value="" selected disabled>Book</option>
+<option value="Genesis">Genesis</option>
+<option value="Exodus">Exodus</option>
+<option value="Leviticus">Leviticus</option>
+<option value="Numbers">Numbers</option>
+<option value="Deuteronomy">Deuteronomy</option>
+<option value="Joshua">Joshua</option>
+<option value="Judges">Judges</option>
+<option value="Ruth">Ruth</option>
+<option value="1 Samuel">1 Samuel</option>
+<option value="2 Samuel">2 Samuel</option>
+<option value="1 Kings">1 Kings</option>
+<option value="2 Kings">2 Kings</option>
+<option value="1 Chronicles">1 Chronicles</option>
+<option value="2 Chronicles">2 Chronicles</option>
+<option value="Ezra">Ezra</option>
+<option value="Nehemiah">Nehemiah</option>
+<option value="Esther">Esther</option>
+<option value="Job">Job</option>
+<option value="Psalms">Psalms</option>
+<option value="Proverbs">Proverbs</option>
+<option value="Ecclesiastes">Ecclesiastes</option>
+<option value="Song of Solomon">Song of Solomon</option>
+<option value="Isaiah">Isaiah</option>
+<option value="Jeremiah">Jeremiah</option>
+<option value="Lamentations">Lamentations</option>
+<option value="Ezekiel">Ezekiel</option>
+<option value="Daniel">Daniel</option>
+<option value="Hosea">Hosea</option>
+<option value="Joel">Joel</option>
+<option value="Amos">Amos</option>
+<option value="Obadiah">Obadiah</option>
+<option value="Jonah">Jonah</option>
+<option value="Micah">Micah</option>
+<option value="Nahum">Nahum</option>
+<option value="Habakkuk">Habakkuk</option>
+<option value="Zephaniah">Zephaniah</option>
+<option value="Haggai">Haggai</option>
+<option value="Zechariah">Zechariah</option>
+<option value="Malachi">Malachi</option>
+<option value="Matthew">Matthew</option>
+<option value="Mark">Mark</option>
+<option value="Luke">Luke</option>
+<option value="John">John</option>
+<option value="Acts">Acts</option>
+<option value="Romans">Romans</option>
+<option value="1 Corinthians">1 Corinthians</option>
+<option value="2 Corinthians">2 Corinthians</option>
+<option value="Galatians">Galatians</option>
+<option value="Ephesians">Ephesians</option>
+<option value="Philippians">Philippians</option>
+<option value="Colossians">Colossians</option>
+<option value="1 Thessalonians">1 Thessalonians</option>
+<option value="2 Thessalonians">2 Thessalonians</option>
+<option value="1 Timothy">1 Timothy</option>
+<option value="2 Timothy">2 Timothy</option>
+<option value="Titus">Titus</option>
+<option value="Philemon">Philemon</option>
+<option value="Hebrews">Hebrews</option>
+<option value="James">James</option>
+<option value="1 Peter">1 Peter</option>
+<option value="2 Peter">2 Peter</option>
+<option value="1 John">1 John</option>
+<option value="2 John">2 John</option>
+<option value="3 John">3 John</option>
+<option value="Jude">Jude</option>
+<option value="Revelation">Revelation</option>
+
+    </select>
     <input id="chapterInput" type="number" placeholder="Chapter" min="1" />
     <input id="startVerseInput" type="number" placeholder="Start Verse" min="1" />
     <input id="endVerseInput" type="number" placeholder="End Verse (optional)" min="1" />
@@ -129,18 +206,194 @@
 
   <div id="voiceFeedback"></div>
 
+   <div style="margin-top: 40px">
+   <button onclick="window.location.href='/faith-hub.html'">🌐 Faith Hub</button>
+ </div>
+  
 <script>
-const bookList = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi", "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"];
+  const display = document.getElementById("verseDisplay");
+  const feedback = document.getElementById("voiceFeedback");
+  let lastReadText = "";
+  window.graceQueue = [];
+  let selectedVoice = null;
+  let isPaused = false;
+  let currentIndex = 0;
+  let speechInstance = null;
 
-const bookSelect = document.getElementById("bookSelect");
-bookList.forEach(book => {
-  const option = document.createElement("option");
-  option.value = book;
-  option.textContent = book;
-  bookSelect.appendChild(option);
-});
+  // Function to Display Scripture without Reading
+  function displayScripture() {
+    const book = document.getElementById("bookSelect").value;
+    const chapter = document.getElementById("chapterInput").value;
+    const startVerse = parseInt(document.getElementById("startVerseInput").value);
+    const endVerse = parseInt(document.getElementById("endVerseInput").value);
+
+    if (!book || !chapter) {
+      return alert("Please select book and chapter");
+    }
+
+    const url = /api/fetch-script.js?book=${book}&chapter=${chapter};
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        let html = "";
+        window.graceQueue = [];
+
+        if (!startVerse && !endVerse) {
+          Object.keys(data.verses).forEach(key => {
+            html += <span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>;
+            window.graceQueue.push(data.verses[key]);
+          });
+        } else {
+          for (let i = startVerse; i <= (endVerse || startVerse); i++) {
+            if (data.verses[i]) {
+              html += <span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>;
+              window.graceQueue.push(data.verses[i]);
+            }
+          }
+        }
+
+        display.innerHTML = html;
+        lastReadText = window.graceQueue.join(" ");
+      })
+      .catch(err => {
+        display.innerText = "⚠️ Error loading verses.";
+        console.error("Error fetching verses:", err);
+      });
+  }
+
+  // Function to Read Selected Verses without Highlight
+  function readSelected() {
+    if (!window.graceQueue.length) {
+      return alert("No verses loaded. Display Scripture first.");
+    }
+    readText(window.graceQueue.join(" "));
+  }
+
+  // Function to Read with Highlight and Speak (Multiple Verses)
+  function readHighlighted() {
+    if (!window.graceQueue.length) {
+      return alert("No verses loaded. Display Scripture first.");
+    }
+
+    currentIndex = 0;
+    speakNext();
+  }
+
+  // Function to Read Text Aloud (Universal)
+  function readText(text) {
+    const voices = speechSynthesis.getVoices();
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.voice = selectedVoice || voices[0];
+    speech.pitch = 1;
+    speech.rate = 0.95;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(speech);
+    lastReadText = text;
+  }
+
+  // Pause or Resume Reading
+  function togglePauseResume() {
+    if (isPaused) {
+      speechSynthesis.resume();
+      isPaused = false;
+      document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+    } else {
+      speechSynthesis.pause();
+      isPaused = true;
+      document.getElementById("pauseResumeBtn").innerText = "▶️ Resume";
+    }
+  }
+
+  // ✅ Stop Reading (Improved)
+  function stopReading() {
+    speechSynthesis.cancel();
+    isPaused = false;
+    currentIndex = 0;
+    document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+    document.getElementById("pauseResumeBtn").innerText = "⏸️ Pause";
+  }
+
+  // Function to Read with Highlight and Speak (Fixed for Multiple Verses)
+  function speakNext() {
+    if (currentIndex >= window.graceQueue.length) return;
+
+    const verseText = window.graceQueue[currentIndex];
+    const verseElement = document.getElementById(verse-${currentIndex + 1});
+
+    // Highlight the current verse
+    document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
+    if (verseElement) {
+      verseElement.classList.add('active-verse');
+      verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Read the text
+    speechInstance = new SpeechSynthesisUtterance(verseText);
+    speechInstance.voice = selectedVoice || speechSynthesis.getVoices()[0];
+    speechInstance.pitch = 1;
+    speechInstance.rate = 0.95;
+
+    speechInstance.onend = () => {
+      if (!isPaused && currentIndex < window.graceQueue.length - 1) {
+        currentIndex++;
+        speakNext();
+      }
+    };
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(speechInstance);
+  }
+
+  // ✅ Add Bookmark (Fixed)
+  function addBookmark(book, chapter, verse, text) {
+    const note = prompt(Add a note for ${book} ${chapter}:${verse}) || "";
+    const entry = {
+      book,
+      chapter,
+      verse,
+      text,
+      note,
+      timestamp: new Date().toISOString()
+    };
+    const bookmarks = JSON.parse(localStorage.getItem("graceBookmarks") || "[]");
+    bookmarks.push(entry);
+    localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
+    alert("📌 Bookmark saved!");
+  }
+// Voice Dropdown Functions
+function populateVoices() {
+  const voiceSelect = document.getElementById("voiceSelect");
+  const voices = speechSynthesis.getVoices();
+  voiceSelect.innerHTML = "";
+
+  voices.forEach((voice) => {
+    const option = document.createElement("option");
+    option.value = voice.name;
+    option.text = ${voice.name} (${voice.lang});
+    voiceSelect.appendChild(option);
+  });
+
+  const savedVoice = localStorage.getItem("selectedVoice");
+  if (savedVoice) {
+    voiceSelect.value = savedVoice;
+  }
+
+  voiceSelect.onchange = () => {
+    localStorage.setItem("selectedVoice", voiceSelect.value);
+    alert("✅ Voice setting saved!");
+  };
+}
+
+speechSynthesis.onvoiceschanged = populateVoices;
+
+  populateVoices();
+};
+
+  // Toggle Theme
+  function toggleTheme() {
+    document.body.classList.toggle("night-mode");
+    localStorage.setItem("graceTheme", document.body.classList.contains("night-mode") ? "dark" : "light");
+  }
 </script>
 
-<script src="script.js"></script>
-</body>
 </html>
