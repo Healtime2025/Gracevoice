@@ -101,18 +101,6 @@
 
   <div>
     <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
-    
-  <label><input type="checkbox" id="themeToggle" onchange="toggleTheme()"> Night Mode</label>
-
-  <label for="voiceSelect" style="margin-left: 20px;">🎤 Select Voice:</label>
-  <select id="voiceSelect" style="padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;">
-    <option disabled selected>Loading voices...</option>
-  </select>
-
-  <button onclick="populateVoices()" style="margin-left: 10px; padding: 10px 16px; font-size: 14px; border-radius: 6px; border: none; background: #1976d2; color: white; cursor: pointer;">
-    🔁 Refresh Voices
-  </button>
-
   </div>
 
   <div>
@@ -231,7 +219,7 @@
       return alert("Please select book and chapter");
     }
 
-    const url = /api/fetch-script.js?book=${book}&chapter=${chapter};
+    const url = `/api/fetch-script.js?book=${book}&chapter=${chapter}`;
     fetch(url)
       .then(res => res.json())
       .then(data => {
@@ -240,13 +228,13 @@
 
         if (!startVerse && !endVerse) {
           Object.keys(data.verses).forEach(key => {
-            html += <span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>;
+            html += `<span id='verse-${key}' class='verse-line'><b>${key}.</b> ${data.verses[key]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${key}, "${data.verses[key].replace(/"/g, '\\"')}")'>🔖</button></span>`;
             window.graceQueue.push(data.verses[key]);
           });
         } else {
           for (let i = startVerse; i <= (endVerse || startVerse); i++) {
             if (data.verses[i]) {
-              html += <span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>;
+              html += `<span id='verse-${i}' class='verse-line'><b>${i}.</b> ${data.verses[i]} <button class='bookmark-btn' onclick='addBookmark("${book}", ${chapter}, ${i}, "${data.verses[i].replace(/"/g, '\\"')}")'>🔖</button></span>`;
               window.graceQueue.push(data.verses[i]);
             }
           }
@@ -318,7 +306,7 @@
     if (currentIndex >= window.graceQueue.length) return;
 
     const verseText = window.graceQueue[currentIndex];
-    const verseElement = document.getElementById(verse-${currentIndex + 1});
+    const verseElement = document.getElementById(`verse-${currentIndex + 1}`);
 
     // Highlight the current verse
     document.querySelectorAll('.verse-line').forEach(el => el.classList.remove('active-verse'));
@@ -346,7 +334,7 @@
 
   // ✅ Add Bookmark (Fixed)
   function addBookmark(book, chapter, verse, text) {
-    const note = prompt(Add a note for ${book} ${chapter}:${verse}) || "";
+    const note = prompt(`Add a note for ${book} ${chapter}:${verse}`) || "";
     const entry = {
       book,
       chapter,
@@ -360,34 +348,18 @@
     localStorage.setItem("graceBookmarks", JSON.stringify(bookmarks));
     alert("📌 Bookmark saved!");
   }
-// Voice Dropdown Functions
-function populateVoices() {
-  const voiceSelect = document.getElementById("voiceSelect");
-  const voices = speechSynthesis.getVoices();
-  voiceSelect.innerHTML = "";
 
-  voices.forEach((voice) => {
-    const option = document.createElement("option");
-    option.value = voice.name;
-    option.text = ${voice.name} (${voice.lang});
-    voiceSelect.appendChild(option);
-  });
+  // Initialize Voice Selection
+  window.onload = () => {
+    if (localStorage.getItem("graceTheme") === "dark") {
+      document.body.classList.add("night-mode");
+      document.getElementById("themeToggle").checked = true;
+    }
 
-  const savedVoice = localStorage.getItem("selectedVoice");
-  if (savedVoice) {
-    voiceSelect.value = savedVoice;
-  }
-
-  voiceSelect.onchange = () => {
-    localStorage.setItem("selectedVoice", voiceSelect.value);
-    alert("✅ Voice setting saved!");
+    speechSynthesis.onvoiceschanged = () => {
+      selectedVoice = speechSynthesis.getVoices()[0];
+    };
   };
-}
-
-speechSynthesis.onvoiceschanged = populateVoices;
-
-  populateVoices();
-};
 
   // Toggle Theme
   function toggleTheme() {
